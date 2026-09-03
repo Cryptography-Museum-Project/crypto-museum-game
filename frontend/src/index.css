@@ -1,0 +1,25 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+@theme {
+  /* Цвета из брендбука выставки "Ключ к доверию" (light version) */
+  --color-brand: #0B4AF9;
+  --color-canvas: #E9E9EF;
+  --color-ink: #14141A;
+  --color-muted: #9A9AA3;
+  --color-line: #D7D7E0;
+
+  --font-sans: "Manrope", system-ui, sans-serif;
+}
+
+body {
+  background-color: #C9C9D2;
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+}
+
+/* ВНИМАНИЕ: шрифт Halvar Breitschrift — платный/лицензионный, в брендбуке
+   отмечен как "требует web-лицензирования". Пока используется Manrope
+   как временная замена. Когда лицензия будет решена — подключить
+   @font-face с Halvar Breitschrift и заменить var(--font-sans) в местах
+   с классом font-display (заголовки экранов). */
