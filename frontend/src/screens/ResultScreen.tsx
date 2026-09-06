@@ -4,6 +4,7 @@ import TopBar from '../components/TopBar';
 import Footer from '../components/Footer';
 import bastionLogo from '../assets/bastion-logo.svg';
 import { TICKET_URL } from '../constants';
+import { getTier } from '../data/tiers';
 
 interface ResultScreenProps {
   score: number;
@@ -31,31 +32,6 @@ function renderWithMemoLink(text: string, onOpenMemo?: () => void) {
       {text.slice(index + word.length)}
     </>
   );
-}
-
-function getTier(score: number) {
-  if (score >= 80) {
-    return {
-      level: 'эксперт',
-      title: 'Отличный результат!',
-      body: 'Ловушки вы видите насквозь. Но мошенники не стоят на месте, так что загляните в памятку, чтобы узнать пару моментов.',
-      cta: 'Хотите быть в курсе новых схем? Ждём вас на выставке «Ключ к доверию», Музей криптографии, при поддержке «Бастион».',
-    };
-  }
-  if (score >= 40) {
-    return {
-      level: 'знаток',
-      title: 'Неплохо!',
-      body: 'Базовые правила вы уже знаете. Пара привычек всё ещё может сыграть против вас, и наша памятка это исправит.',
-      cta: 'Хотите прокачаться дальше? Ждём вас на выставке «Ключ к доверию». Музей криптографии, при поддержке «Бастион».',
-    };
-  }
-  return {
-    level: 'новичок',
-    title: '',
-    body: 'Даже на начальном уровне важно понимать необходимость защиты данных. Памятка поможет закрыть самые уязвимые места уже сегодня.',
-    cta: 'Хотите разобраться глубже? Ждём вас на выставке «Ключ к доверию». Музей криптографии, при поддержке «Бастион».',
-  };
 }
 
 export default function ResultScreen({
