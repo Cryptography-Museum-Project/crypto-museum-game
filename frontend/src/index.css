@@ -1,25 +1,54 @@
-@import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+@import 'tailwindcss';
+
+@font-face {
+  font-family: 'Halvar Breitschrift';
+  src:
+    url('/fonts/Halvar-Breitschrift-Light.woff2') format('woff2'),
+    url('/fonts/Halvar-Breitschrift-Light.woff') format('woff');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Halvar Breitschrift';
+  src:
+    url('/fonts/Halvar-Breitschrift-Regular.woff2') format('woff2'),
+    url('/fonts/Halvar-Breitschrift-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Halvar Breitschrift';
+  src:
+    url('/fonts/Halvar-Breitschrift-Bold.woff2') format('woff2'),
+    url('/fonts/Halvar-Breitschrift-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
 
 @theme {
   /* Цвета из брендбука выставки "Ключ к доверию" (light version) */
-  --color-brand: #0B4AF9;
-  --color-canvas: #E9E9EF;
-  --color-ink: #14141A;
-  --color-muted: #9A9AA3;
-  --color-line: #D7D7E0;
-
-  --font-sans: "Manrope", system-ui, sans-serif;
+  --color-brand: #0b4af9;
+  --color-canvas: #e9e9ef;
+  --color-ink: #14141a;
+  --color-muted: #9a9aa3;
+  --color-line: #d7d7e0;
+  --color-dark: #00001a;
+  --font-halvar: 'Halvar Breitschrift', system-ui, sans-serif;
 }
 
 body {
-  background-color: #C9C9D2;
-  font-family: var(--font-sans);
+  background-color: #c9c9d2;
+  font-family: var(--font-halvar);
+  font-weight: 400;
   color: var(--color-ink);
 }
 
-/* ВНИМАНИЕ: шрифт Halvar Breitschrift — платный/лицензионный, в брендбуке
-   отмечен как "требует web-лицензирования". Пока используется Manrope
-   как временная замена. Когда лицензия будет решена — подключить
-   @font-face с Halvar Breitschrift и заменить var(--font-sans) в местах
-   с классом font-display (заголовки экранов). */
+button {
+  -webkit-appearance: none;
+  appearance: none;
+}

@@ -1,6 +1,7 @@
 import type { Scenario } from '../types';
 import PhoneScreen from '../components/PhoneScreen';
-import ProgressBar from '../components/ProgressBar';
+import TopBar from '../components/TopBar';
+import Footer from '../components/Footer';
 import OptionsList from '../components/OptionsList';
 import NotificationVisual from '../components/visuals/NotificationVisual';
 import PermissionsVisual from '../components/visuals/PermissionsVisual';
@@ -9,17 +10,15 @@ import CallVisual from '../components/visuals/CallVisual';
 import EmailVisual from '../components/visuals/EmailVisual';
 import PaymentVisual from '../components/visuals/PaymentVisual';
 import PhotoPermissionVisual from '../components/visuals/PhotoPermissionVisual';
+import PlaceholderVisual from '../components/visuals/PlaceholderVisual';
 import { TOTAL_SCENARIOS } from '../data/scenarios';
 
 interface ScenarioScreenProps {
   scenario: Scenario;
   onSelectOption?: (optionId: string) => void;
+  onHome?: () => void;
 }
 
-// Здесь только "переключатель", какую карточку-визуал показать.
-// Конкретные тексты (город, сумма, email и т.д.) для сценариев 1-7
-// зашиты внутри визуала — при желании их тоже можно вынести в data/scenarios.ts,
-// если кибербез захочет их менять без участия фронтенда.
 function renderVisual(scenario: Scenario) {
   switch (scenario.visual) {
     case 'notification':
@@ -49,22 +48,30 @@ function renderVisual(scenario: Scenario) {
       );
     case 'photoPermission':
       return <PhotoPermissionVisual />;
+    case 'placeholder': {
+      const iconByCode: Record<string, 'lock' | 'device' | 'cart'> = {
+        ПАРОЛЬ: 'lock',
+        АВИТО: 'device',
+        ПОКУПКА: 'cart',
+      };
+      return <PlaceholderVisual icon={iconByCode[scenario.code] ?? 'lock'} />;
+    }
     default:
       return null;
   }
 }
 
-export default function ScenarioScreen({ scenario, onSelectOption }: ScenarioScreenProps) {
+export default function ScenarioScreen({ scenario, onSelectOption, onHome }: ScenarioScreenProps) {
   return (
     <PhoneScreen>
-      <ProgressBar current={scenario.id} total={TOTAL_SCENARIOS} />
+      <TopBar current={scenario.id} total={TOTAL_SCENARIOS} onHome={onHome} />
 
-      <h1 className="text-brand text-[34px] font-extrabold uppercase leading-none mt-5">
+      <h1 className="font-halvar font-light text-brand text-[34px] uppercase leading-none mt-5">
         {scenario.code}
       </h1>
-      <p className="text-ink text-[15px] leading-snug mt-3">{scenario.description}</p>
+      <p className="text-ink text-[15px] leading-snug mt-3 min-h-21">{scenario.description}</p>
 
-      <div className="mt-6">{renderVisual(scenario)}</div>
+      <div className="mt-6 min-h-55 flex items-center justify-center">{renderVisual(scenario)}</div>
 
       <OptionsList
         heading={scenario.optionsHeading}
@@ -72,12 +79,9 @@ export default function ScenarioScreen({ scenario, onSelectOption }: ScenarioScr
         onSelect={onSelectOption}
       />
 
-      <button
-        type="button"
-        className="mt-8 mx-auto text-[11px] tracking-wide text-muted uppercase"
-      >
-        Вернуться к выставке
-      </button>
+      <div className="flex-1" />
+
+      <Footer />
     </PhoneScreen>
   );
 }

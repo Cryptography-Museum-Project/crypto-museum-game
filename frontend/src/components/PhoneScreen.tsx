@@ -6,8 +6,8 @@ interface PhoneScreenProps {
 
 export default function PhoneScreen({ children }: PhoneScreenProps) {
   return (
-    <div className="min-h-screen w-full flex justify-center bg-[#C9C9D2] py-6">
-      <div className="relative overflow-hidden w-[360px] min-h-[740px] bg-canvas flex flex-col px-5 pt-7 pb-8">
+    <div className="min-h-dvh w-full flex justify-center bg-[#C9C9D2]">
+      <div className="relative overflow-hidden w-full max-w-90 min-h-dvh bg-canvas flex flex-col px-5 pt-7 pb-8">
         {children}
       </div>
     </div>

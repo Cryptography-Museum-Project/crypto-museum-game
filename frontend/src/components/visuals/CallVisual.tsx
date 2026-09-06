@@ -7,20 +7,13 @@ export default function CallVisual({ duration }: { duration: string }) {
       </div>
       <div className="flex items-end gap-[3px] flex-1 h-6">
         {bars.map((h, i) => (
-          <span
-            key={i}
-            className="w-[3px] rounded-full bg-brand/70"
-            style={{ height: `${h}px` }}
-          />
+          <span key={i} className="w-[3px] rounded-full bg-brand/70" style={{ height: `${h}px` }} />
         ))}
       </div>
       <span className="text-sm text-muted tabular-nums shrink-0">{duration}</span>
       <div className="w-9 h-9 rounded-full bg-brand flex items-center justify-center shrink-0">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M4 5c0 8 7 15 15 15l2-4-5-2-2 2c-2.5-1-4-2.5-5-5l2-2-2-5-4 1z"
-            fill="white"
-          />
+          <path d="M4 5c0 8 7 15 15 15l2-4-5-2-2 2c-2.5-1-4-2.5-5-5l2-2-2-5-4 1z" fill="white" />
         </svg>
       </div>
     </div>

@@ -1,7 +1,15 @@
+import carIcon from '../../assets/car-icon.svg';
+
 function Icon({ path }: { path: string }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="text-brand">
-      <path d={path} stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d={path}
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -16,9 +24,7 @@ const ICONS = {
 export default function PermissionsVisual() {
   return (
     <div className="bg-white rounded-2xl p-6 flex flex-col items-center text-center gap-4">
-      <div className="w-14 h-14 rounded-2xl bg-brand/10 flex items-center justify-center text-2xl">
-        🚕
-      </div>
+      <img src={carIcon} alt="" className="w-21 h-auto" />
       <p className="text-[15px] leading-snug text-ink">
         Разрешить доступ к геолокации,
         <br />

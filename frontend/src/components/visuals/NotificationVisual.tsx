@@ -14,9 +14,7 @@ export default function NotificationVisual() {
             <rect x="3" y="5" width="18" height="14" rx="2.5" stroke="#0B4AF9" strokeWidth="1.8" />
           </svg>
         </div>
-        <p className="text-white text-sm leading-snug">
-          Ваш аккаунт требует подтверждения
-        </p>
+        <p className="text-white text-sm leading-snug">Ваш аккаунт требует подтверждения</p>
         <button
           type="button"
           className="w-full rounded-xl bg-[#1D1D29] text-white text-xs font-semibold py-2.5"
@@ -24,7 +22,8 @@ export default function NotificationVisual() {
           ПОДТВЕРДИТЬ АККАУНТ
         </button>
         <p className="text-[#8A8A96] text-xs leading-snug">
-          Нажмите <span className="text-white font-medium">здесь</span>, чтобы защитить свой профиль.
+          Нажмите <span className="text-white font-medium">здесь</span>, чтобы защитить свой
+          профиль.
         </p>
       </div>
     </div>
