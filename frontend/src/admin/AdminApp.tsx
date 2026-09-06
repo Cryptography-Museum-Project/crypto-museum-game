@@ -1,0 +1,68 @@
+import { useState } from 'react';
+import LoginScreen from './screens/LoginScreen';
+import OverviewScreen from './screens/OverviewScreen';
+import AnswerStatsScreen from './screens/AnswerStatsScreen';
+import ScenariosListScreen from './screens/ScenariosListScreen';
+import ScenarioEditScreen from './screens/ScenarioEditScreen';
+import ProfilesScreen from './screens/ProfilesScreen';
+import type { AdminTab } from './components/BottomNav';
+
+type Stage =
+  | { name: 'login' }
+  | { name: 'overview' }
+  | { name: 'answer-stats'; scenarioId?: number }
+  | { name: 'scenarios' }
+  | { name: 'scenario-edit'; scenarioId: number }
+  | { name: 'profiles' };
+
+export default function AdminApp() {
+  const [stage, setStage] = useState<Stage>({ name: 'login' });
+
+  const goToTab = (tab: AdminTab) => setStage({ name: tab } as Stage);
+
+  switch (stage.name) {
+    case 'login':
+      return <LoginScreen onLogin={() => setStage({ name: 'overview' })} />;
+
+    case 'overview':
+      return (
+        <OverviewScreen
+          onChangeTab={goToTab}
+          onOpenScenarioStats={(scenarioId) => setStage({ name: 'answer-stats', scenarioId })}
+        />
+      );
+
+    case 'answer-stats':
+      return (
+        <AnswerStatsScreen
+          focusScenarioId={stage.scenarioId}
+          onBack={() => setStage({ name: 'overview' })}
+        />
+      );
+
+    case 'scenarios':
+      return (
+        <ScenariosListScreen
+          onChangeTab={goToTab}
+          onOpenScenario={(scenarioId) => setStage({ name: 'scenario-edit', scenarioId })}
+          onAddScenario={() =>
+            window.alert('Добавление нового сценария подключим вместе с бэкендом.')
+          }
+        />
+      );
+
+    case 'scenario-edit':
+      return (
+        <ScenarioEditScreen
+          scenarioId={stage.scenarioId}
+          onBack={() => setStage({ name: 'scenarios' })}
+        />
+      );
+
+    case 'profiles':
+      return <ProfilesScreen onChangeTab={goToTab} />;
+
+    default:
+      return null;
+  }
+}
