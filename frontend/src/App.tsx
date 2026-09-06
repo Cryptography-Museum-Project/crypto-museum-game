@@ -1,45 +1,96 @@
 import { useState } from 'react';
 import LandingScreen from './screens/LandingScreen';
 import ScenarioScreen from './screens/ScenarioScreen';
-import PhoneScreen from './components/PhoneScreen';
-import { scenarios } from './data/scenarios';
+import AnswerScreen from './screens/AnswerScreen';
+import ResultScreen from './screens/ResultScreen';
+import MemoScreen from './screens/MemoScreen';
+import { scenarios, TOTAL_SCENARIOS } from './data/scenarios';
 
-// Простой "переключатель экранов" для черновой вёрстки.
-// -1 = лендинг, 0..scenarios.length-1 = индекс сценария.
-// Реальную игровую логику (подсчёт баллов, категории, финальный экран)
-// подключит бэкенд-интеграция на следующем этапе.
+type Stage = 'landing' | 'scenario' | 'answer' | 'result' | 'memo';
+
 function App() {
-  const [step, setStep] = useState(-1);
+  const [stage, setStage] = useState<Stage>('landing');
+  const [index, setIndex] = useState(0);
+  const [scores, setScores] = useState<number[]>([]);
+  const [lastOptionId, setLastOptionId] = useState<string | null>(null);
 
-  if (step === -1) {
-    return <LandingScreen onStart={() => setStep(0)} />;
+  const resetToLanding = () => {
+    setStage('landing');
+    setIndex(0);
+    setScores([]);
+    setLastOptionId(null);
+  };
+
+  const handleStart = () => {
+    setIndex(0);
+    setScores([]);
+    setStage('scenario');
+  };
+
+  const handleSelectOption = (optionId: string) => {
+    setLastOptionId(optionId);
+    setStage('answer');
+  };
+
+  const handleContinue = () => {
+    const scenario = scenarios[index];
+    const chosen = scenario.options.find((option) => option.id === lastOptionId);
+    const nextScores = [...scores, chosen?.points ?? 0];
+    setScores(nextScores);
+
+    if (index + 1 < scenarios.length) {
+      setIndex(index + 1);
+      setStage('scenario');
+    } else {
+      setStage('result');
+    }
+  };
+
+  if (stage === 'landing') {
+    return <LandingScreen onStart={handleStart} />;
   }
 
-  if (step >= scenarios.length) {
+  if (stage === 'scenario') {
     return (
-      <PhoneScreen>
-        <div className="flex-1 flex flex-col items-center justify-center text-center gap-3">
-          <p className="text-brand text-xl font-bold">Черновик закончился</p>
-          <p className="text-muted text-sm max-w-[220px]">
-            Готовы сценарии 1–7. Сценарии 8–10 и финальный экран добавим,
-            когда их пришлёт кибербез-специалист.
-          </p>
-          <button
-            type="button"
-            onClick={() => setStep(-1)}
-            className="mt-2 text-brand text-sm font-semibold"
-          >
-            Начать сначала
-          </button>
-        </div>
-      </PhoneScreen>
+      <ScenarioScreen
+        scenario={scenarios[index]}
+        onSelectOption={handleSelectOption}
+        onHome={resetToLanding}
+      />
     );
   }
 
+  if (stage === 'answer') {
+    const scenario = scenarios[index];
+    const chosen = scenario.options.find((option) => option.id === lastOptionId);
+    const best = scenario.options.find((option) => option.points === 10);
+
+    return (
+      <AnswerScreen
+        current={index + 1}
+        total={TOTAL_SCENARIOS}
+        points={chosen?.points ?? 0}
+        explanation={chosen?.explanation ?? ''}
+        correctOptionId={best?.id ?? ''}
+        correctLabel={best?.label ?? ''}
+        onHome={resetToLanding}
+        onContinue={handleContinue}
+      />
+    );
+  }
+
+  if (stage === 'memo') {
+    return <MemoScreen onHome={resetToLanding} onBack={() => setStage('result')} />;
+  }
+
+  const total = scores.reduce((sum, points) => sum + points, 0);
   return (
-    <ScenarioScreen
-      scenario={scenarios[step]}
-      onSelectOption={() => setStep((s) => s + 1)}
+    <ResultScreen
+      score={total}
+      total={TOTAL_SCENARIOS}
+      onHome={resetToLanding}
+      onReplay={resetToLanding}
+      onOpenMemo={() => setStage('memo')}
     />
   );
 }
