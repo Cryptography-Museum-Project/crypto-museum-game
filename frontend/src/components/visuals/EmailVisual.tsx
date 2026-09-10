@@ -6,8 +6,8 @@ interface EmailVisualProps {
 
 export default function EmailVisual({ from, subject, buttonLabel }: EmailVisualProps) {
   return (
-    <div className="bg-white rounded-2xl p-6 flex flex-col items-center text-center gap-4">
-      <div className="relative w-14 h-14 rounded-2xl bg-brand/10 flex items-center justify-center">
+    <div className="bg-white rounded-[5px] p-6 flex flex-col items-center text-center gap-4">
+      <div className="relative w-14 h-14 rounded-[5px] bg-brand/10 flex items-center justify-center">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-brand">
           <rect
             x="3"
@@ -38,7 +38,7 @@ export default function EmailVisual({ from, subject, buttonLabel }: EmailVisualP
       </div>
       <button
         type="button"
-        className="w-full rounded-xl bg-brand text-white text-xs font-semibold py-2.5"
+        className="w-full rounded-[5px] bg-brand text-white text-xs font-semibold py-2.5"
       >
         {buttonLabel}
       </button>

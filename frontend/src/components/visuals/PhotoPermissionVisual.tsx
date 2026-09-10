@@ -1,7 +1,7 @@
 export default function PhotoPermissionVisual() {
   return (
-    <div className="bg-white rounded-2xl p-6 flex flex-col items-center text-center gap-4">
-      <div className="w-14 h-14 rounded-2xl bg-brand/10 flex items-center justify-center">
+    <div className="bg-white rounded-[5px] p-6 flex flex-col items-center text-center gap-4">
+      <div className="w-14 h-14 rounded-[5px] bg-brand/10 flex items-center justify-center">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-brand">
           <rect
             x="3"
@@ -30,13 +30,13 @@ export default function PhotoPermissionVisual() {
       <div className="flex gap-3 w-full">
         <button
           type="button"
-          className="flex-1 rounded-xl bg-brand text-white text-xs font-bold py-3"
+          className="flex-1 rounded-[5px] bg-brand text-white text-xs font-bold py-3"
         >
           РАЗРЕШИТЬ
         </button>
         <button
           type="button"
-          className="flex-1 rounded-xl border border-line text-muted text-xs font-bold py-3"
+          className="flex-1 rounded-[5px] border border-line text-muted text-xs font-bold py-3"
         >
           ЗАПРЕТИТЬ
         </button>

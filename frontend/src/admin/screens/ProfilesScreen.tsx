@@ -18,7 +18,7 @@ export default function ProfilesScreen({ onChangeTab }: ProfilesScreenProps) {
     <PhoneScreen>
       <div className="flex-1 overflow-y-auto -mx-5 px-5 space-y-4">
         {TIERS.map((tier) => (
-          <div key={tier.key} className="bg-white rounded-2xl p-4">
+          <div key={tier.key} className="bg-white rounded-[5px] p-4">
             <div className="flex items-start justify-between gap-3 mb-2">
               <p className="font-bold text-ink text-[16px] capitalize">{tier.level}</p>
               <div className="text-right shrink-0">

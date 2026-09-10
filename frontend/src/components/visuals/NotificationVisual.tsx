@@ -1,8 +1,8 @@
 export default function NotificationVisual() {
   return (
-    <div className="bg-white rounded-2xl p-6 flex flex-col items-center">
+    <div className="bg-white rounded-[5px] p-6 flex flex-col items-center xl:bg-transparent xl:p-0">
       <div className="w-full max-w-[220px] rounded-[28px] bg-[#0E0E16] p-5 flex flex-col items-center text-center gap-3">
-        <div className="w-11 h-11 rounded-xl bg-brand/20 flex items-center justify-center">
+        <div className="w-11 h-11 rounded-[5px] bg-brand/20 flex items-center justify-center">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <path
               d="M3 6.5L12 13L21 6.5"
@@ -17,7 +17,7 @@ export default function NotificationVisual() {
         <p className="text-white text-sm leading-snug">Ваш аккаунт требует подтверждения</p>
         <button
           type="button"
-          className="w-full rounded-xl bg-[#1D1D29] text-white text-xs font-semibold py-2.5"
+          className="w-full rounded-[5px] bg-[#1D1D29] text-white text-xs font-semibold py-2.5"
         >
           ПОДТВЕРДИТЬ АККАУНТ
         </button>

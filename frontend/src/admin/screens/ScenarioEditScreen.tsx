@@ -133,7 +133,7 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
         <button
           type="button"
           onClick={() => setSaved(true)}
-          className="w-full bg-dark text-white text-[15px] font-bold py-4 mt-6 mb-4"
+          className="w-full rounded-[5px] bg-dark text-white text-[15px] font-bold py-4 mt-6 mb-4"
         >
           {saved ? 'Сохранено ✓' : 'Сохранить'}
         </button>

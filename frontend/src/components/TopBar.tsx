@@ -12,19 +12,23 @@ interface TopBarProps {
 export default function TopBar({ current, total, onHome, showReplay, onReplay }: TopBarProps) {
   return (
     <div>
-      <div className="flex items-center justify-between mb-2">
-        <button type="button" onClick={onHome} aria-label="На главную">
+      <div className="flex items-center mb-2 xl:justify-end">
+        <button type="button" onClick={onHome} aria-label="На главную" className="xl:hidden">
           <img src={homeIcon} alt="" className="w-5 h-5" />
         </button>
+        <div className="flex-1 xl:hidden" />
         <span className="font-halvar font-bold text-xs text-muted tabular-nums">
           {String(current).padStart(2, '0')} / {total}
         </span>
-        {showReplay ? (
-          <button type="button" onClick={onReplay} aria-label="Начать заново">
+        {showReplay && (
+          <button
+            type="button"
+            onClick={onReplay}
+            aria-label="Начать заново"
+            className="xl:hidden ml-3"
+          >
             <img src={replayIcon} alt="Начать заново" className="w-5 h-5" />
           </button>
-        ) : (
-          <span className="w-5" />
         )}
       </div>
       <div className="flex gap-1.5">

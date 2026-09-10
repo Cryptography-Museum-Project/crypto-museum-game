@@ -14,7 +14,7 @@ function WifiIcon() {
 
 export default function WifiVisual({ networkName }: { networkName: string }) {
   return (
-    <div className="bg-white rounded-2xl px-4 py-4 flex items-center justify-between gap-3">
+    <div className="bg-white rounded-[5px] px-4 py-4 flex items-center justify-between gap-3">
       <WifiIcon />
       <span className="text-[15px] font-semibold text-ink tracking-wide">{networkName}</span>
       <WifiIcon />
