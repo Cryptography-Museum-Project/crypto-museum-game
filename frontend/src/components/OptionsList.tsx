@@ -16,7 +16,7 @@ export default function OptionsList({ heading, options, onSelect }: OptionsListP
             key={option.id}
             type="button"
             onClick={() => onSelect?.(option.id)}
-            className="w-full flex items-center gap-3 bg-white rounded-2xl border border-line px-4 py-3.5 text-left active:bg-canvas transition-colors"
+            className="w-full flex items-center gap-3 bg-white rounded-[5px] border border-line px-4 py-3.5 text-left active:bg-canvas transition-colors"
           >
             <span className="text-muted text-sm font-medium w-6 shrink-0">{option.id}</span>
             <span className="flex-1 text-[15px] leading-snug text-ink">{option.label}</span>

@@ -85,7 +85,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
           <button
             type="submit"
-            className="mt-3 w-full bg-dark text-white text-[15px] font-bold py-4 flex items-center justify-center gap-2"
+            className="mt-3 w-full rounded-[5px] bg-dark text-white text-[15px] font-bold py-4 flex items-center justify-center gap-2"
           >
             ВОЙТИ
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

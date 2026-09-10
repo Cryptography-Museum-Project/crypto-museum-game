@@ -6,9 +6,9 @@ import { EXHIBITION_URL } from '../constants';
 // отдельное упоминание партнёра (см. ResultScreen).
 export default function Footer() {
   return (
-    <div className="flex items-center justify-center mt-4">
+    <div className="flex items-center justify-center mt-4 xl:hidden">
       <a href={EXHIBITION_URL} target="_blank" rel="noopener noreferrer">
-        <img src={museumLogo} alt="Музей криптографии — страница выставки" className="h-5" />
+        <img src={museumLogo} alt="Музей криптографии — страница выставки" className="w-32 h-7" />
       </a>
     </div>
   );

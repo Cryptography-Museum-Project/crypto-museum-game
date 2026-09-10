@@ -30,7 +30,7 @@ export default function ScenariosListScreen({
             key={scenario.id}
             type="button"
             onClick={() => onOpenScenario(scenario.id)}
-            className="w-full flex gap-3 bg-white rounded-2xl p-4 text-left"
+            className="w-full flex gap-3 bg-white rounded-[5px] p-4 text-left"
           >
             <span className="font-bold text-ink shrink-0">{scenario.id}</span>
             <span className="text-[13px] text-ink leading-snug">{scenario.description}</span>

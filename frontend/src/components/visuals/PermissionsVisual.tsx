@@ -23,7 +23,7 @@ const ICONS = {
 
 export default function PermissionsVisual() {
   return (
-    <div className="bg-white rounded-2xl p-6 flex flex-col items-center text-center gap-4">
+    <div className="bg-white rounded-[5px] p-6 flex flex-col items-center text-center gap-4">
       <img src={carIcon} alt="" className="w-21 h-auto" />
       <p className="text-[15px] leading-snug text-ink">
         Разрешить доступ к геолокации,

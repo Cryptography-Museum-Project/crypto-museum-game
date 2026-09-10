@@ -45,7 +45,7 @@ export default function AnswerStatsScreen({ focusScenarioId, onBack }: AnswerSta
           return (
             <div
               key={scenario.id}
-              className={`bg-white rounded-2xl p-4 ${
+              className={`bg-white rounded-[5px] p-4 ${
                 scenario.id === focusScenarioId ? 'ring-2 ring-brand' : ''
               }`}
             >
@@ -59,7 +59,7 @@ export default function AnswerStatsScreen({ focusScenarioId, onBack }: AnswerSta
                   return (
                     <div
                       key={option.id}
-                      className={`flex items-center justify-between rounded-lg px-3 py-2 text-[12px] ${
+                      className={`flex items-center justify-between rounded-[5px] px-3 py-2 text-[12px] ${
                         isCorrect ? 'bg-emerald-100 text-emerald-800' : 'bg-canvas text-ink'
                       }`}
                     >

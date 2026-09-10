@@ -87,7 +87,6 @@ function App() {
   return (
     <ResultScreen
       score={total}
-      total={TOTAL_SCENARIOS}
       onHome={resetToLanding}
       onReplay={resetToLanding}
       onOpenMemo={() => setStage('memo')}

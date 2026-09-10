@@ -19,7 +19,7 @@ interface OverviewScreenProps {
 
 function StatCard({ label, value, delta }: { label: string; value: string; delta: string }) {
   return (
-    <div className="bg-white rounded-2xl p-4">
+    <div className="bg-white rounded-[5px] p-4">
       <p className="text-[11px] text-muted mb-1">{label}</p>
       <p className="flex items-baseline gap-2">
         <span className="font-halvar font-bold text-brand text-[22px]">{value}</span>
@@ -114,12 +114,12 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
           />
         </div>
 
-        <div className="bg-white rounded-2xl p-4 mt-3">
+        <div className="bg-white rounded-[5px] p-4 mt-3">
           <p className="text-[12px] font-bold text-ink mb-2">динамика — прохождения по периодам</p>
           <LineChart points={stats.timeline.values} labels={stats.timeline.labels} />
         </div>
 
-        <div className="bg-white rounded-2xl p-4 mt-3">
+        <div className="bg-white rounded-[5px] p-4 mt-3">
           <p className="text-[12px] font-bold text-ink mb-1">ошибки по сценариям</p>
           <p className="text-[11px] text-muted mb-3">
             нажмите на сценарий, чтобы увидеть разбивку по ответам
@@ -165,7 +165,7 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 mt-3">
+        <div className="bg-white rounded-[5px] p-4 mt-3">
           <p className="text-[12px] font-bold text-ink mb-3">частые ошибки</p>
           {COMMON_MISTAKES.map((mistake) => (
             <div key={mistake.title} className="flex gap-3">
@@ -180,7 +180,7 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
           ))}
         </div>
 
-        <div className="bg-white rounded-2xl p-4 mt-3 mb-2">
+        <div className="bg-white rounded-[5px] p-4 mt-3 mb-2">
           <p className="text-[12px] font-bold text-ink mb-3">
             профили — {stats.playthroughs.value.toLocaleString('ru-RU')} чел.
           </p>

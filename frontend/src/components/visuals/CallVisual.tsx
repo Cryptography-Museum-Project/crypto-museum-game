@@ -1,7 +1,7 @@
 export default function CallVisual({ duration }: { duration: string }) {
   const bars = [6, 14, 9, 18, 11, 20, 8, 15, 10, 17, 7];
   return (
-    <div className="bg-white rounded-2xl px-4 py-4 flex items-center gap-3">
+    <div className="bg-white rounded-[5px] px-4 py-4 flex items-center gap-3">
       <div className="w-9 h-9 rounded-full bg-canvas flex items-center justify-center text-lg shrink-0">
         +
       </div>
