@@ -33,12 +33,7 @@ export default function AdminApp() {
       );
 
     case 'answer-stats':
-      return (
-        <AnswerStatsScreen
-          focusScenarioId={stage.scenarioId}
-          onBack={() => setStage({ name: 'overview' })}
-        />
-      );
+      return <AnswerStatsScreen focusScenarioId={stage.scenarioId} onChangeTab={goToTab} />;
 
     case 'scenarios':
       return (

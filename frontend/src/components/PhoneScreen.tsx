@@ -8,14 +8,14 @@ interface PhoneScreenProps {
 
 export default function PhoneScreen({ children }: PhoneScreenProps) {
   return (
-    <div className="min-h-dvh w-full flex justify-center bg-[#C9C9D2] xl:bg-canvas">
-      <div className="w-full max-w-90 min-h-dvh flex flex-col xl:max-w-none xl:min-h-screen xl:grid xl:grid-cols-[320px_1fr_320px]">
-        <div className="hidden xl:block xl:pl-10 xl:pt-12">
+    <div className="min-h-dvh w-full flex justify-center bg-canvas px-[clamp(0px,calc(50.06vw_-_320.4px),255.3px)] tablet:px-0">
+      <div className="w-full min-h-dvh flex flex-col tablet:min-h-screen tablet:grid tablet:grid-cols-[clamp(24px,22.2vw,320px)_1fr_clamp(24px,22.2vw,320px)]">
+        <div className="hidden tablet:block tablet:pl-10 tablet:pt-12">
           <a href={EXHIBITION_URL} target="_blank" rel="noopener noreferrer">
             <img src={museumLogo} alt="Музей криптографии" className="h-10" />
           </a>
         </div>
-        <div className="relative overflow-hidden bg-canvas flex-1 flex flex-col px-5 pt-7 pb-8 xl:px-0 xl:pt-12 xl:pb-16">
+        <div className="relative overflow-hidden bg-canvas flex-1 flex flex-col px-5 pt-7 pb-8 tablet:px-0 tablet:pt-12 tablet:pb-16">
           {children}
         </div>
         {/* Правая крайняя колонка — по макету пустая, ничего сюда не добавляем */}

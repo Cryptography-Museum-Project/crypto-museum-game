@@ -94,10 +94,10 @@ export default function ResultScreen({ score, onHome, onReplay, onOpenMemo }: Re
           {tier.title && <p className="font-bold">{tier.title}</p>}
           <p>{renderWithMemoLink(tier.body, onOpenMemo)}</p>
           <p>{tier.cta}</p>
-        </div>
 
-        <div className="flex items-center justify-center gap-2 mt-3 xl:mt-14 xl:justify-start xl:col-start-1 xl:row-start-2">
-          <img src={bastionLogo} alt="Бастион" className="h-5" />
+          <div className="flex items-center justify-center gap-2 xl:justify-start">
+            <img src={bastionLogo} alt="Бастион" className="h-5" />
+          </div>
         </div>
 
         <div className="flex-1 xl:hidden" />
