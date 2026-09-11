@@ -11,6 +11,7 @@ import {
   PROFILE_DISTRIBUTION,
   type Period,
 } from '../data/mockStats';
+import { SECONDARY_BUTTON, FOCUS_RING } from '../../styles/interactive';
 
 interface OverviewScreenProps {
   onChangeTab: (tab: AdminTab) => void;
@@ -45,7 +46,7 @@ function PeriodFilter({ period, onChange }: { period: Period; onChange: (p: Peri
       <button
         type="button"
         onClick={() => setIsOpen((v) => !v)}
-        className="flex items-center gap-2 bg-white border border-line px-4 py-2.5 text-[13px] font-semibold text-ink"
+        className={`flex items-center gap-2 bg-white border border-line px-4 py-2.5 text-[13px] font-semibold text-ink ${SECONDARY_BUTTON}`}
       >
         Период: {currentLabel}
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
@@ -69,8 +70,10 @@ function PeriodFilter({ period, onChange }: { period: Period; onChange: (p: Peri
                 onChange(p.key);
                 setIsOpen(false);
               }}
-              className={`w-full text-left px-4 py-2.5 text-[13px] ${
-                p.key === period ? 'bg-brand text-white font-semibold' : 'text-ink'
+              className={`w-full text-left px-4 py-2.5 text-[13px] transition-colors ${FOCUS_RING} ${
+                p.key === period
+                  ? 'bg-brand text-white font-semibold'
+                  : 'text-ink hover:bg-canvas active:bg-line'
               }`}
             >
               {p.label}
@@ -132,7 +135,7 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
                   key={scenario.id}
                   type="button"
                   onClick={() => onOpenScenarioStats(scenario.id)}
-                  className="w-full flex items-center gap-3 text-left"
+                  className={`group w-full flex items-center gap-3 text-left rounded-[5px] px-2 -mx-2 py-1 hover:bg-canvas active:bg-line transition-colors ${FOCUS_RING}`}
                 >
                   <span className="text-[11px] text-muted w-7 shrink-0 tabular-nums">{pct}%</span>
                   <span className="flex-1 h-1.5 bg-canvas rounded-full overflow-hidden">
@@ -149,7 +152,7 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
                     height="14"
                     viewBox="0 0 16 16"
                     fill="none"
-                    className="shrink-0 text-muted"
+                    className="shrink-0 text-muted group-hover:text-brand transition-colors"
                   >
                     <path
                       d="M6 3L11 8L6 13"

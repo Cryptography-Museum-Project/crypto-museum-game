@@ -7,6 +7,7 @@ import replayIcon from '../assets/replay-icon.svg';
 import bastionLogo from '../assets/bastion-logo.svg';
 import { TICKET_URL } from '../constants';
 import { getTier } from '../data/tiers';
+import { PRIMARY_BUTTON, ICON_BUTTON, TEXT_LINK, FOCUS_RING } from '../styles/interactive';
 
 interface ResultScreenProps {
   score: number;
@@ -28,7 +29,11 @@ function renderWithMemoLink(text: string, onOpenMemo?: () => void) {
   return (
     <>
       {text.slice(0, index)}
-      <button type="button" onClick={onOpenMemo} className="text-brand underline font-semibold">
+      <button
+        type="button"
+        onClick={onOpenMemo}
+        className={`text-brand underline font-semibold rounded-sm ${TEXT_LINK}`}
+      >
         {word}
       </button>
       {text.slice(index + word.length)}
@@ -43,7 +48,12 @@ function ScoreBar({ score, onHome }: { score: number; onHome?: () => void }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-2 xl:justify-end">
-        <button type="button" onClick={onHome} aria-label="На главную" className="xl:hidden">
+        <button
+          type="button"
+          onClick={onHome}
+          aria-label="На главную"
+          className={`p-1.5 -m-1.5 xl:hidden ${ICON_BUTTON}`}
+        >
           <img src={homeIcon} alt="" className="w-5 h-5" />
         </button>
         <span className="font-halvar font-bold text-xs text-muted tabular-nums">
@@ -109,7 +119,7 @@ export default function ResultScreen({ score, onHome, onReplay, onOpenMemo }: Re
             href={TICKET_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="block text-center w-full rounded-[5px] bg-dark text-white text-[15px] font-bold py-4 mt-4 xl:w-auto xl:mt-0 xl:px-12"
+            className={`block text-center w-full rounded-[5px] text-white text-[15px] font-bold py-4 mt-4 xl:w-auto xl:mt-0 xl:px-12 ${PRIMARY_BUTTON}`}
           >
             КУПИТЬ БИЛЕТ
           </a>
@@ -126,7 +136,7 @@ export default function ResultScreen({ score, onHome, onReplay, onOpenMemo }: Re
             <button
               type="button"
               onClick={handleCopy}
-              className="shrink-0 w-8 h-8 rounded-[5px] border border-line xl:border-0 flex items-center justify-center text-brand text-xs"
+              className={`shrink-0 w-8 h-8 rounded-[5px] border border-line xl:border-0 flex items-center justify-center text-brand text-xs hover:bg-canvas hover:border-brand active:brightness-95 transition-colors ${FOCUS_RING}`}
               aria-label="Скопировать промокод"
             >
               {copied ? '✓' : '⧉'}
@@ -137,7 +147,7 @@ export default function ResultScreen({ score, onHome, onReplay, onOpenMemo }: Re
         <button
           type="button"
           onClick={onReplay}
-          className="hidden xl:flex items-center gap-1.5 text-ink text-[18px] mt-4 xl:mt-6 xl:col-start-1 xl:row-start-4"
+          className={`hidden xl:flex items-center gap-1.5 text-ink text-[18px] mt-4 xl:mt-6 xl:col-start-1 xl:row-start-4 rounded-sm ${TEXT_LINK}`}
         >
           пройти ещё раз
           <img src={replayIcon} alt="" className="w-4 h-4" />

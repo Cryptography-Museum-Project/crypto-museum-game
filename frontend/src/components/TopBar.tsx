@@ -1,5 +1,6 @@
 import homeIcon from '../assets/house-icon.svg';
 import replayIcon from '../assets/replay-icon.svg';
+import { ICON_BUTTON } from '../styles/interactive';
 
 interface TopBarProps {
   current: number;
@@ -13,7 +14,12 @@ export default function TopBar({ current, total, onHome, showReplay, onReplay }:
   return (
     <div>
       <div className="flex items-center mb-2 xl:justify-end">
-        <button type="button" onClick={onHome} aria-label="На главную" className="xl:hidden">
+        <button
+          type="button"
+          onClick={onHome}
+          aria-label="На главную"
+          className={`p-1.5 -m-1.5 xl:hidden ${ICON_BUTTON}`}
+        >
           <img src={homeIcon} alt="" className="w-5 h-5" />
         </button>
         <div className="flex-1 xl:hidden" />
@@ -25,7 +31,7 @@ export default function TopBar({ current, total, onHome, showReplay, onReplay }:
             type="button"
             onClick={onReplay}
             aria-label="Начать заново"
-            className="xl:hidden ml-3"
+            className={`p-1.5 -m-1.5 xl:hidden ml-3 ${ICON_BUTTON}`}
           >
             <img src={replayIcon} alt="Начать заново" className="w-5 h-5" />
           </button>

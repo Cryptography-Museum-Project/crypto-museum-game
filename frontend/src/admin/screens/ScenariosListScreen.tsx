@@ -1,6 +1,7 @@
 import PhoneScreen from '../../components/PhoneScreen';
 import BottomNav, { type AdminTab } from '../components/BottomNav';
 import { scenarios } from '../../data/scenarios';
+import { SECONDARY_BUTTON, FOCUS_RING } from '../../styles/interactive';
 
 interface ScenariosListScreenProps {
   onChangeTab: (tab: AdminTab) => void;
@@ -18,7 +19,7 @@ export default function ScenariosListScreen({
       <button
         type="button"
         onClick={onAddScenario}
-        className="ml-auto flex items-center gap-1.5 bg-white border border-line px-4 py-2.5 text-[13px] font-semibold text-ink mb-4"
+        className={`ml-auto flex items-center gap-1.5 bg-white px-4 py-2.5 text-[13px] font-semibold text-ink mb-4 ${SECONDARY_BUTTON}`}
       >
         добавить
         <span className="text-brand text-base leading-none">+</span>
@@ -30,7 +31,7 @@ export default function ScenariosListScreen({
             key={scenario.id}
             type="button"
             onClick={() => onOpenScenario(scenario.id)}
-            className="w-full flex gap-3 bg-white rounded-[5px] p-4 text-left"
+            className={`w-full flex gap-3 bg-white rounded-[5px] p-4 text-left border-2 border-transparent hover:border-brand active:bg-canvas transition-colors ${FOCUS_RING}`}
           >
             <span className="font-bold text-ink shrink-0">{scenario.id}</span>
             <span className="text-[13px] text-ink leading-snug">{scenario.description}</span>

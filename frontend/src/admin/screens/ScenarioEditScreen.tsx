@@ -2,6 +2,13 @@ import { useState } from 'react';
 import PhoneScreen from '../../components/PhoneScreen';
 import { scenarios } from '../../data/scenarios';
 import type { ScenarioOption } from '../../types';
+import {
+  PRIMARY_BUTTON,
+  SECONDARY_BUTTON,
+  TEXT_LINK,
+  FIELD,
+  CHOICE_INPUT,
+} from '../../styles/interactive';
 
 interface ScenarioEditScreenProps {
   scenarioId: number;
@@ -51,7 +58,12 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
 
   return (
     <PhoneScreen>
-      <button type="button" onClick={onBack} className="flex items-center gap-1.5 text-ink mb-4">
+      <button
+        type="button"
+        onClick={onBack}
+        className={`flex items-center gap-1.5 text-ink mb-4 rounded-sm ${TEXT_LINK}`}
+      >
+        {' '}
         <BackArrow />
         <span className="text-[13px] font-semibold">Сценарии</span>
       </button>
@@ -67,11 +79,11 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
               setSaved(false);
             }}
             placeholder="название"
-            className="flex-1 min-w-0 bg-white border border-line px-3 py-3 text-[14px] text-ink outline-none"
+            className={`flex-1 min-w-0 bg-white px-3 py-3 text-[14px] text-ink ${FIELD}`}
           />
           <button
             type="button"
-            className="shrink-0 flex items-center gap-1.5 bg-white border border-line px-4 py-3 text-[13px] text-ink"
+            className={`shrink-0 flex items-center gap-1.5 bg-white px-4 py-3 text-[13px] text-ink ${SECONDARY_BUTTON}`}
           >
             фото
             <span className="text-brand text-base leading-none">+</span>
@@ -86,7 +98,7 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
           }}
           placeholder="напишите вопрос"
           rows={3}
-          className="w-full bg-white border border-line px-3 py-3 text-[14px] text-ink outline-none mb-4 resize-none"
+          className={`w-full bg-white px-3 py-3 text-[14px] text-ink mb-4 resize-none ${FIELD}`}
         />
 
         <div className="space-y-4">
@@ -105,7 +117,7 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
                         name={`points-${option.id}`}
                         checked={option.points === pointValue}
                         onChange={() => updateOption(option.id, { points: pointValue })}
-                        className="w-4 h-4 accent-brand"
+                        className={`w-4 h-4 accent-brand ${CHOICE_INPUT}`}
                       />
                       {pointValue === 0 ? '0' : `+${pointValue}`}
                     </label>
@@ -117,14 +129,14 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
                 value={option.label}
                 onChange={(e) => updateOption(option.id, { label: e.target.value })}
                 placeholder="ответ"
-                className="w-full bg-white border border-line px-3 py-3 text-[14px] text-ink outline-none mb-2"
+                className={`w-full bg-white px-3 py-3 text-[14px] text-ink mb-2 ${FIELD}`}
               />
               <textarea
                 value={option.explanation}
                 onChange={(e) => updateOption(option.id, { explanation: e.target.value })}
                 placeholder="комментарий"
                 rows={2}
-                className="w-full bg-white border border-line px-3 py-3 text-[13px] text-ink outline-none resize-none"
+                className={`w-full bg-white px-3 py-3 text-[13px] text-ink resize-none ${FIELD}`}
               />
             </div>
           ))}
@@ -133,7 +145,7 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
         <button
           type="button"
           onClick={() => setSaved(true)}
-          className="w-full rounded-[5px] bg-dark text-white text-[15px] font-bold py-4 mt-6 mb-4"
+          className={`w-full rounded-[5px] text-white text-[15px] font-bold py-4 mt-6 mb-4 ${PRIMARY_BUTTON}`}
         >
           {saved ? 'Сохранено ✓' : 'Сохранить'}
         </button>

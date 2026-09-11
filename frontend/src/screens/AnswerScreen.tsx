@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import bestChoiceIcon from '../assets/best-choice-icon.svg';
 import dangerIcon from '../assets/danger-icon.svg';
 import safetyIcon from '../assets/safety-icon.svg';
+import { PRIMARY_BUTTON } from '../styles/interactive';
 
 interface AnswerScreenProps {
   current: number;
@@ -86,7 +87,7 @@ export default function AnswerScreen({
         <button
           type="button"
           onClick={onContinue}
-          className="w-full rounded-[5px] bg-dark text-white text-[15px] font-bold py-4 mt-6 xl:w-auto xl:justify-self-start xl:px-12 xl:mt-8 xl:col-start-1 xl:row-start-3"
+          className={`w-full rounded-[5px] text-white text-[15px] font-bold py-4 mt-6 xl:w-auto xl:justify-self-start xl:px-12 xl:mt-8 xl:col-start-1 xl:row-start-3 ${PRIMARY_BUTTON}`}
         >
           ПРОДОЛЖИТЬ
         </button>

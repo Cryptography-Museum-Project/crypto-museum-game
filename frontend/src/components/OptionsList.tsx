@@ -1,4 +1,5 @@
 import type { ScenarioOption } from '../types';
+import { OPTION_CARD } from '../styles/interactive';
 
 interface OptionsListProps {
   heading?: string;
@@ -16,7 +17,7 @@ export default function OptionsList({ heading, options, onSelect }: OptionsListP
             key={option.id}
             type="button"
             onClick={() => onSelect?.(option.id)}
-            className="w-full flex items-center gap-3 bg-white rounded-[5px] border border-line px-4 py-3.5 text-left active:bg-canvas transition-colors"
+            className={`group w-full flex items-center gap-3 bg-white rounded-[5px] px-4 py-3.5 text-left ${OPTION_CARD}`}
           >
             <span className="text-muted text-sm font-medium w-6 shrink-0">{option.id}</span>
             <span className="flex-1 text-[15px] leading-snug text-ink">{option.label}</span>
@@ -25,7 +26,7 @@ export default function OptionsList({ heading, options, onSelect }: OptionsListP
               height="16"
               viewBox="0 0 16 16"
               fill="none"
-              className="shrink-0 text-muted"
+              className="shrink-0 text-muted group-hover:text-brand transition-colors"
             >
               <path
                 d="M6 3L11 8L6 13"
