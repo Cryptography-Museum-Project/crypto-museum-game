@@ -5,6 +5,7 @@ import circlesBg from '../assets/circles.png';
 import dotsBg from '../assets/dots.png';
 import desktopPattern from '../assets/desktop-pattern.png';
 import desktopFigure from '../assets/desktop-figure.png';
+import { PRIMARY_BUTTON } from '../styles/interactive';
 
 interface LandingScreenProps {
   onStart?: () => void;
@@ -74,7 +75,7 @@ export default function LandingScreen({ onStart }: LandingScreenProps) {
         <button
           type="button"
           onClick={onStart}
-          className="relative mt-4 w-full rounded-[5px] bg-dark text-white text-[15px] font-bold py-4 text-center xl:w-auto xl:self-start xl:text-left xl:leading-snug xl:px-8 xl:py-3 xl:mt-6"
+          className={`relative mt-4 w-full rounded-[5px] text-white text-[15px] font-bold py-4 text-center xl:w-auto xl:self-start xl:text-left xl:leading-snug xl:px-8 xl:py-3 xl:mt-6 ${PRIMARY_BUTTON}`}
         >
           <span className="xl:hidden">ПРОЙТИ И ПОЛУЧИТЬ СКИДКУ</span>
           <span className="hidden xl:block">ПРОЙТИ</span>

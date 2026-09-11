@@ -7,6 +7,7 @@ import bastionLogo from '../assets/bastion-logo.svg';
 import Footer from '../components/Footer';
 import PhoneScreen from '../components/PhoneScreen';
 import { EXHIBITION_URL, TICKET_URL } from '../constants';
+import { PRIMARY_BUTTON, ICON_BUTTON, TEXT_LINK, FOCUS_RING } from '../styles/interactive';
 
 const PROMO_CODE = '59FG-SDFG-DGK9';
 
@@ -93,13 +94,18 @@ export default function MemoScreen({ onHome, onBack }: MemoScreenProps) {
   return (
     <PhoneScreen>
       <div className="flex items-center justify-between mb-4 xl:hidden">
-        <button type="button" onClick={onHome} aria-label="На главную">
+        <button
+          type="button"
+          onClick={onHome}
+          aria-label="На главную"
+          className={`p-1.5 -m-1.5 ${ICON_BUTTON}`}
+        >
           <img src={homeIcon} alt="" className="w-5 h-5" />
         </button>
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-1.5 text-ink text-[13px] font-semibold"
+          className={`flex items-center gap-1.5 text-ink text-[13px] font-semibold rounded-sm ${TEXT_LINK}`}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path
@@ -116,7 +122,7 @@ export default function MemoScreen({ onHome, onBack }: MemoScreenProps) {
 
       <div className="flex-1 overflow-y-auto -mx-5 px-5 xl:flex-none xl:overflow-visible xl:mx-0 xl:px-0 xl:max-w-3xl">
         <div className="hidden xl:flex xl:items-center xl:justify-between">
-          <button type="button" onClick={onBack} className="text-left">
+          <button type="button" onClick={onBack} className={`text-left rounded-sm ${TEXT_LINK}`}>
             <h1 className="font-halvar font-light text-brand text-[29px] uppercase leading-none">
               Памятка
             </h1>
@@ -124,7 +130,7 @@ export default function MemoScreen({ onHome, onBack }: MemoScreenProps) {
           <button
             type="button"
             onClick={onBack}
-            className="flex items-center gap-1.5 text-ink text-[13px] font-semibold"
+            className={`flex items-center gap-1.5 text-ink text-[13px] font-semibold rounded-sm ${TEXT_LINK}`}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path
@@ -178,7 +184,7 @@ export default function MemoScreen({ onHome, onBack }: MemoScreenProps) {
             href={EXHIBITION_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-brand underline"
+            className={`text-brand underline rounded-sm ${TEXT_LINK}`}
           >
             «Ключ к доверию. Безопасность в эпоху высоких технологий»
           </a>{' '}
@@ -194,7 +200,7 @@ export default function MemoScreen({ onHome, onBack }: MemoScreenProps) {
             href={TICKET_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="block text-center w-full rounded-[5px] bg-dark text-white text-[15px] font-bold py-4 xl:w-auto xl:px-12"
+            className={`block text-center w-full rounded-[5px] text-white text-[15px] font-bold py-4 xl:w-auto xl:px-12 ${PRIMARY_BUTTON}`}
           >
             КУПИТЬ БИЛЕТ
           </a>
@@ -211,7 +217,7 @@ export default function MemoScreen({ onHome, onBack }: MemoScreenProps) {
             <button
               type="button"
               onClick={handleCopy}
-              className="shrink-0 w-8 h-8 rounded-[5px] border border-line xl:border-0 flex items-center justify-center text-brand text-xs"
+              className={`shrink-0 w-8 h-8 rounded-[5px] border border-line xl:border-0 flex items-center justify-center text-brand text-xs hover:bg-canvas hover:border-brand active:brightness-95 transition-colors ${FOCUS_RING}`}
               aria-label="Скопировать промокод"
             >
               {copied ? '✓' : '⧉'}
@@ -222,7 +228,7 @@ export default function MemoScreen({ onHome, onBack }: MemoScreenProps) {
         <button
           type="button"
           onClick={onHome}
-          className="hidden xl:flex items-center gap-1.5 text-ink text-[18px] mt-4"
+          className={`hidden xl:flex items-center gap-1.5 text-ink text-[18px] mt-4 rounded-sm ${TEXT_LINK}`}
         >
           пройти ещё раз
           <img src={replayIcon} alt="" className="w-4 h-4" />

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import PhoneScreen from '../../components/PhoneScreen';
 import BottomNav, { type AdminTab } from '../components/BottomNav';
 import { TIERS } from '../../data/tiers';
+import { FIELD } from '../../styles/interactive';
 
 interface ProfilesScreenProps {
   onChangeTab: (tab: AdminTab) => void;
@@ -32,7 +33,7 @@ export default function ProfilesScreen({ onChangeTab }: ProfilesScreenProps) {
               value={descriptions[tier.key]}
               onChange={(e) => setDescriptions((prev) => ({ ...prev, [tier.key]: e.target.value }))}
               rows={4}
-              className="w-full text-[13px] text-ink leading-snug outline-none resize-none border border-line px-3 py-2"
+              className={`w-full text-[13px] text-ink leading-snug resize-none px-3 py-2 ${FIELD}`}
             />
           </div>
         ))}
