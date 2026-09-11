@@ -12,11 +12,14 @@ export type VisualType =
   | 'notification'
   | 'permissions'
   | 'wifi'
-  | 'call'
+  | 'bankCall'
   | 'email'
+  | 'scamCall'
   | 'payment'
-  | 'photoPermission'
-  | 'placeholder';
+  | 'smartHome'
+  | 'password'
+  | 'device'
+  | 'purchase';
 
 export interface Scenario {
   id: number; // порядковый номер сценария, 1..10

@@ -39,10 +39,17 @@
   --color-line: #d7d7e0;
   --color-dark: #00001a;
   --font-halvar: 'Halvar Breitschrift', system-ui, sans-serif;
+
+  /*
+   * Брейкпоинт переключения PhoneScreen с мобильной (одна колонка на всю
+   * ширину) на десктопную (трёхколоночную, с плавно сужающимися боковыми
+   * колонками) вёрстку. 
+   */
+  --breakpoint-tablet: 71.875rem; /* 1150px */
 }
 
 body {
-  background-color: #c9c9d2;
+  background-color: #e9e9ef;
   font-family: var(--font-halvar);
   font-weight: 400;
   color: var(--color-ink);

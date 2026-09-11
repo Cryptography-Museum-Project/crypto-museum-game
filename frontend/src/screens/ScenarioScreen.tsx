@@ -4,15 +4,19 @@ import TopBar from '../components/TopBar';
 import GameMasthead from '../components/GameMasthead';
 import Footer from '../components/Footer';
 import OptionsList from '../components/OptionsList';
-import NotificationVisual from '../components/visuals/NotificationVisual';
-import PermissionsVisual from '../components/visuals/PermissionsVisual';
-import WifiVisual from '../components/visuals/WifiVisual';
-import CallVisual from '../components/visuals/CallVisual';
-import EmailVisual from '../components/visuals/EmailVisual';
-import PaymentVisual from '../components/visuals/PaymentVisual';
-import PhotoPermissionVisual from '../components/visuals/PhotoPermissionVisual';
-import PlaceholderVisual from '../components/visuals/PlaceholderVisual';
+import ScenarioVisualImage from '../components/visuals/ScenarioVisualImage';
 import { TOTAL_SCENARIOS } from '../data/scenarios';
+
+import smartphoneNotification from '../assets/scenario-visuals/smartphone-notification.png';
+import taxiPermissions from '../assets/scenario-visuals/taxi-permissions.png';
+import cafeWifi from '../assets/scenario-visuals/cafe-wifi.png';
+import bankCallCode from '../assets/scenario-visuals/bank-call-code.png';
+import workEmail from '../assets/scenario-visuals/work-email.png';
+import scamCall from '../assets/scenario-visuals/scam-call.png';
+import smartHome from '../assets/scenario-visuals/smart-home.png';
+import passwordMonitor from '../assets/scenario-visuals/password-monitor.png';
+import avitoApps from '../assets/scenario-visuals/avito-apps.png';
+import purchasePhone from '../assets/scenario-visuals/purchase-phone.png';
 
 interface ScenarioScreenProps {
   scenario: Scenario;
@@ -23,40 +27,54 @@ interface ScenarioScreenProps {
 function renderVisual(scenario: Scenario) {
   switch (scenario.visual) {
     case 'notification':
-      return <NotificationVisual />;
+      return (
+        <ScenarioVisualImage src={smartphoneNotification} alt="Ваш аккаунт требует подтверждения" />
+      );
     case 'permissions':
-      return <PermissionsVisual />;
+      return (
+        <ScenarioVisualImage
+          src={taxiPermissions}
+          alt="Приложение TAXI запрашивает доступ к контактам, геолокации, микрофону и фото"
+        />
+      );
     case 'wifi':
-      return <WifiVisual networkName="FREE_COFFEE_WIFI" />;
-    case 'call':
-      return <CallVisual duration="00:24" />;
+      return <ScenarioVisualImage src={cafeWifi} alt="Доступные сети Wi-Fi в кафе" />;
+    case 'bankCall':
+      return (
+        <ScenarioVisualImage
+          src={bankCallCode}
+          alt="Входящий звонок с кодом подтверждения из SMS"
+        />
+      );
     case 'email':
+      return <ScenarioVisualImage src={workEmail} alt="Письмо от anna@company-support.ru" />;
+    case 'scamCall':
+      return <ScenarioVisualImage src={scamCall} alt="Входящий звонок со скрытым номером" />;
+    case 'smartHome':
       return (
-        <EmailVisual
-          from="anna@company-support.ru"
-          subject="Вы получили доступ к документу"
-          buttonLabel="ПОСМОТРЕТЬ ДОКУМЕНТ"
+        <ScenarioVisualImage src={smartHome} alt="Приложение умного дома запрашивает разрешения" />
+      );
+    case 'password':
+      return (
+        <ScenarioVisualImage
+          src={passwordMonitor}
+          alt="Регистрация в сервисе для просмотра фильмов"
         />
       );
-    case 'payment':
+    case 'device':
       return (
-        <PaymentVisual
-          status="Ваша посылка задержана"
-          message="Оплатите 89 ₽, чтобы избежать ареста доставки."
-          buttonLabel="ОПЛАТИТЬ"
-          fakeUrl="delivery-check-support/..."
+        <ScenarioVisualImage
+          src={avitoApps}
+          alt="Приложения на смартфоне, который продают на Авито"
         />
       );
-    case 'photoPermission':
-      return <PhotoPermissionVisual />;
-    case 'placeholder': {
-      const iconByCode: Record<string, 'lock' | 'device' | 'cart'> = {
-        ПАРОЛЬ: 'lock',
-        АВИТО: 'device',
-        ПОКУПКА: 'cart',
-      };
-      return <PlaceholderVisual icon={iconByCode[scenario.code] ?? 'lock'} />;
-    }
+    case 'purchase':
+      return (
+        <ScenarioVisualImage
+          src={purchasePhone}
+          alt="Реклама смартфона со скидкой 70% на незнакомом сайте"
+        />
+      );
     default:
       return null;
   }

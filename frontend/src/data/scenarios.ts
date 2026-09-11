@@ -107,7 +107,7 @@ export const scenarios: Scenario[] = [
     category: 'Финансы',
     description:
       'Вам звонят из банка. Собеседник сообщает о подозрительной операции и просит назвать код из SMS.',
-    visual: 'call',
+    visual: 'bankCall',
     optionsHeading: 'Ваши действия?',
     options: [
       {
@@ -169,7 +169,7 @@ export const scenarios: Scenario[] = [
     category: 'Финансы',
     description:
       'Вам звонят люди, представляющиеся сотрудниками ЦБ, ФСБ или МВД. Говорят, что на вас пытаются оформить кредит, и просят перевести деньги на «безопасный счёт».',
-    visual: 'call',
+    visual: 'scamCall',
     optionsHeading: 'Ваши действия?',
     options: [
       {
@@ -200,7 +200,7 @@ export const scenarios: Scenario[] = [
     code: 'УМНЫЙ ДОМ',
     category: 'Приватность',
     description: 'Вы хотите скачать новое приложение.',
-    visual: 'photoPermission',
+    visual: 'smartHome',
     optionsHeading: 'Ваши действия?',
     options: [
       {
@@ -232,7 +232,7 @@ export const scenarios: Scenario[] = [
     category: 'Пароли',
     description:
       'Вечером вы регистрируетесь в новом сервисе для просмотра фильмов. Нужно придумать пароль.',
-    visual: 'placeholder',
+    visual: 'password',
     optionsHeading: 'Ваши действия?',
     options: [
       {
@@ -264,7 +264,7 @@ export const scenarios: Scenario[] = [
     category: 'Устройства',
     description:
       'Вы продаёте старый смартфон на Авито. Покупатель уже нашёлся и просит подготовить телефон к передаче.',
-    visual: 'placeholder',
+    visual: 'device',
     optionsHeading: 'Ваши действия?',
     options: [
       {
@@ -296,7 +296,7 @@ export const scenarios: Scenario[] = [
     category: 'Финансы',
     description:
       'Поздно вечером вы листаете ленту и видите рекламу: смартфон известного бренда со скидкой 70%. Сайт незнакомый, но выглядит аккуратно.',
-    visual: 'placeholder',
+    visual: 'purchase',
     optionsHeading: 'Ваши действия?',
     options: [
       {
