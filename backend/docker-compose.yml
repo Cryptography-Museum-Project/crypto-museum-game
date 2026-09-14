@@ -1,0 +1,20 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: sqlite:////app/data/game.db
+      JWT_SECRET: ${JWT_SECRET:-change-me-please}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-240}
+      ADMIN_DEFAULT_USERNAME: ${ADMIN_DEFAULT_USERNAME:-admin}
+      ADMIN_DEFAULT_PASSWORD: ${ADMIN_DEFAULT_PASSWORD:-admin123}
+      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-*}
+    volumes:
+      # Файл базы данных сохраняется на диске хост-машины, а не только
+      # внутри контейнера — так данные не пропадут при docker compose down.
+      - db_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  db_data:
