@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -79,7 +79,14 @@ class GameSession(Base):
     __tablename__ = "sessions"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)  # UUID, генерируется на сервере
-    started_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    # default (не server_default!) — timestamp ставит сам Python с точностью
+    # до микросекунд. SQLite-функция CURRENT_TIMESTAMP (которая была бы за
+    # server_default=func.now()) хранит время только с точностью до секунды —
+    # если два прохождения стартуют в одну и ту же секунду (что легко
+    # случается при быстром тестировании или наплыве посетителей на
+    # выставке), они получали бы совершенно одинаковый started_at, и график
+    # динамики в админке "схлопывался" бы в плоскую линию.
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.utcnow())
     finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     total_score: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 0..100, он же "процент"
     tier_id: Mapped[int | None] = mapped_column(ForeignKey("tiers.id"), nullable=True)
@@ -98,7 +105,7 @@ class SessionAnswer(Base):
     scenario_id: Mapped[int] = mapped_column(ForeignKey("scenarios.id"), index=True)
     option_id: Mapped[int] = mapped_column(ForeignKey("scenario_options.id"), index=True)
     points: Mapped[int] = mapped_column(Integer)  # баллы варианта, сохраняем на момент ответа
-    answered_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    answered_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.utcnow())
 
 
 class AdminUser(Base):
@@ -109,4 +116,4 @@ class AdminUser(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.utcnow())

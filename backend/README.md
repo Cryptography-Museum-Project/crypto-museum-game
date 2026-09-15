@@ -49,7 +49,7 @@ crypto-museum-backend/
 
 ```bash
 # 1. Перейти в папку проекта
-cd crypto-museum-backend
+cd crypto-museum-game\backend
 
 # 2. Создать виртуальное окружение (изолированное место для библиотек проекта)
 python3 -m venv .venv
@@ -78,12 +78,12 @@ uvicorn app.main:app --reload
 Понадобится установленный Docker и Docker Compose.
 
 ```bash
-cd crypto-museum-backend
-cp .env.example .env      # при желании поменяй пароли внутри .env
+cd crypto-museum-game\backend
+copy .env.example .env      # при желании поменяй пароли внутри .env
 docker compose up --build
 ```
 
-API поднимется на `http://<адрес-сервера>:8000`, данные (файл базы)
+API поднимется на `http://<адрес-сервера>:8000`, данные (файл базы) = http://localhost:8000/docs
 сохраняются в Docker volume и не пропадут при перезапуске контейнера.
 
 Остановить: `docker compose down` (данные останутся).

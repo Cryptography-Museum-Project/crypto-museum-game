@@ -1,4 +1,5 @@
 import { FOCUS_RING } from '../../styles/interactive';
+import { clearStoredToken } from '../api';
 
 export type AdminTab = 'overview' | 'scenarios' | 'profiles';
 
@@ -7,9 +8,6 @@ interface BottomNavProps {
   onChange: (tab: AdminTab) => void;
 }
 
-// Иконки — на currentColor: цвет задаётся снаружи через text-* классы на
-// кнопке (а не пропом active, как было раньше), это и позволяет управлять
-// им через hover/active/группу, а не только через "активная вкладка или нет".
 function EyeIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -56,11 +54,44 @@ function PeopleIcon() {
   );
 }
 
+function LogoutIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M16 17l5-5-5-5M21 12H9"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 const TABS: { key: AdminTab; label: string; Icon: typeof EyeIcon }[] = [
   { key: 'overview', label: 'обзор', Icon: EyeIcon },
   { key: 'scenarios', label: 'сценарии', Icon: DocIcon },
   { key: 'profiles', label: 'профили', Icon: PeopleIcon },
 ];
+
+// Выход из админки доступен прямо здесь, а не отдельным экраном — эта
+// панель и так отрисована на каждой странице админки, значит кнопка
+// доступна откуда угодно. После очистки токена просто перезагружаем
+// страницу: AdminApp при загрузке сам проверяет токен и, не найдя его,
+// покажет экран входа — отдельно прокидывать колбэк через все экраны
+// не требуется.
+function handleLogout() {
+  if (!window.confirm('Выйти из админ-панели?')) return;
+  clearStoredToken();
+  window.location.reload();
+}
 
 export default function BottomNav({ active, onChange }: BottomNavProps) {
   return (
@@ -82,6 +113,15 @@ export default function BottomNav({ active, onChange }: BottomNavProps) {
           </button>
         );
       })}
+
+      <button
+        type="button"
+        onClick={handleLogout}
+        className={`flex flex-col items-center gap-1 px-3 pt-1 pb-1 rounded-[5px] transition-colors active:bg-ink/5 text-muted hover:text-ink ${FOCUS_RING}`}
+      >
+        <LogoutIcon />
+        <span className="text-[11px]">выход</span>
+      </button>
     </div>
   );
 }

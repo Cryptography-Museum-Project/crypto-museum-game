@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import LoginScreen from './screens/LoginScreen';
 import OverviewScreen from './screens/OverviewScreen';
 import AnswerStatsScreen from './screens/AnswerStatsScreen';
@@ -6,8 +6,10 @@ import ScenariosListScreen from './screens/ScenariosListScreen';
 import ScenarioEditScreen from './screens/ScenarioEditScreen';
 import ProfilesScreen from './screens/ProfilesScreen';
 import type { AdminTab } from './components/BottomNav';
+import { clearStoredToken, getStoredToken, whoAmI } from './api';
 
 type Stage =
+  | { name: 'checking-session' }
   | { name: 'login' }
   | { name: 'overview' }
   | { name: 'answer-stats'; scenarioId?: number }
@@ -16,9 +18,29 @@ type Stage =
   | { name: 'profiles' };
 
 export default function AdminApp() {
-  const [stage, setStage] = useState<Stage>({ name: 'login' });
+  const [stage, setStage] = useState<Stage>({ name: 'checking-session' });
+
+  // Если в браузере уже сохранён токен (вошли раньше) — проверяем, что он
+  // ещё действует, и сразу открываем админку, не заставляя логиниться снова.
+  useEffect(() => {
+    const token = getStoredToken();
+    if (!token) {
+      setStage({ name: 'login' });
+      return;
+    }
+    whoAmI(token)
+      .then(() => setStage({ name: 'overview' }))
+      .catch(() => {
+        clearStoredToken();
+        setStage({ name: 'login' });
+      });
+  }, []);
 
   const goToTab = (tab: AdminTab) => setStage({ name: tab } as Stage);
+
+  if (stage.name === 'checking-session') {
+    return null;
+  }
 
   switch (stage.name) {
     case 'login':
