@@ -21,10 +21,14 @@ export type VisualType =
   | 'device'
   | 'purchase';
 
+// Категория цифровой безопасности сценария — вынесена отдельным типом,
+// чтобы им же могли пользоваться API-клиенты (src/api, src/admin/api.ts).
+export type Category = 'Пароли' | 'Фишинг' | 'Wi-Fi' | 'Приватность' | 'Устройства' | 'Финансы';
+
 export interface Scenario {
   id: number; // порядковый номер сценария, 1..10
   code: string; // короткий код-название, напр. "СМАРТФОН"
-  category: 'Пароли' | 'Фишинг' | 'Wi-Fi' | 'Приватность' | 'Устройства' | 'Финансы';
+  category: Category;
   description: string; // текст ситуации под заголовком
   visual: VisualType; // какой компонент-визуал рендерить
   optionsHeading?: string; // заголовок над списком вариантов

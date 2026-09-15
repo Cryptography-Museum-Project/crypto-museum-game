@@ -1,24 +1,53 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import LandingScreen from './screens/LandingScreen';
 import ScenarioScreen from './screens/ScenarioScreen';
 import AnswerScreen from './screens/AnswerScreen';
 import ResultScreen from './screens/ResultScreen';
 import MemoScreen from './screens/MemoScreen';
-import { scenarios, TOTAL_SCENARIOS } from './data/scenarios';
+import PhoneScreen from './components/PhoneScreen';
+import { fetchScenarios, startSession, submitAnswer, finishSession } from './api/game';
+import type { PlayableScenario } from './api/game';
 
 type Stage = 'landing' | 'scenario' | 'answer' | 'result' | 'memo';
+type LoadState = 'loading' | 'ready' | 'error';
 
 function App() {
+  // Сценарии и id игровой сессии приходят с backend при загрузке страницы.
+  const [loadState, setLoadState] = useState<LoadState>('loading');
+  const [scenarios, setScenarios] = useState<PlayableScenario[]>([]);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
   const [stage, setStage] = useState<Stage>('landing');
   const [index, setIndex] = useState(0);
   const [scores, setScores] = useState<number[]>([]);
   const [lastOptionId, setLastOptionId] = useState<string | null>(null);
+
+  const loadGame = () => {
+    setLoadState('loading');
+    // Сессию и список сценариев запрашиваем параллельно — они не зависят
+    // друг от друга.
+    Promise.all([fetchScenarios(), startSession()])
+      .then(([loadedScenarios, newSessionId]) => {
+        setScenarios(loadedScenarios);
+        setSessionId(newSessionId);
+        setLoadState('ready');
+      })
+      .catch((error) => {
+        console.error('Не удалось загрузить игру с backend:', error);
+        setLoadState('error');
+      });
+  };
+
+  useEffect(loadGame, []);
 
   const resetToLanding = () => {
     setStage('landing');
     setIndex(0);
     setScores([]);
     setLastOptionId(null);
+    // Каждое прохождение — это новая сессия на backend, поэтому при
+    // возврате на старт начинаем сессию заново.
+    loadGame();
   };
 
   const handleStart = () => {
@@ -38,13 +67,57 @@ function App() {
     const nextScores = [...scores, chosen?.points ?? 0];
     setScores(nextScores);
 
+    // Отправляем ответ на backend в фоне: если он по какой-то причине не
+    // ответит (нет сети, сервер прилёг) — игра всё равно должна работать,
+    // поэтому не ждём ответа и не блокируем интерфейс.
+    if (sessionId && chosen) {
+      submitAnswer(sessionId, scenario.id, chosen.dbOptionId).catch((error) => {
+        console.error('Не удалось сохранить ответ на backend:', error);
+      });
+    }
+
     if (index + 1 < scenarios.length) {
       setIndex(index + 1);
       setStage('scenario');
     } else {
+      if (sessionId) {
+        finishSession(sessionId).catch((error) => {
+          console.error('Не удалось завершить сессию на backend:', error);
+        });
+      }
       setStage('result');
     }
   };
+
+  if (loadState === 'loading') {
+    return (
+      <PhoneScreen>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-ink text-[14px]">Загрузка игры…</p>
+        </div>
+      </PhoneScreen>
+    );
+  }
+
+  if (loadState === 'error') {
+    return (
+      <PhoneScreen>
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center">
+          <p className="text-ink text-[14px]">
+            Не удалось связаться с сервером. Проверьте подключение к интернету и попробуйте ещё
+            раз.
+          </p>
+          <button
+            type="button"
+            onClick={loadGame}
+            className="rounded-[5px] bg-brand text-white text-[14px] font-bold px-6 py-3"
+          >
+            Повторить
+          </button>
+        </div>
+      </PhoneScreen>
+    );
+  }
 
   if (stage === 'landing') {
     return <LandingScreen onStart={handleStart} />;
@@ -68,7 +141,7 @@ function App() {
     return (
       <AnswerScreen
         current={index + 1}
-        total={TOTAL_SCENARIOS}
+        total={scenarios.length}
         points={chosen?.points ?? 0}
         explanation={chosen?.explanation ?? ''}
         correctOptionId={best?.id ?? ''}

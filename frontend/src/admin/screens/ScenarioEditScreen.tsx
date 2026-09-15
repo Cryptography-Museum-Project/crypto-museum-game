@@ -1,7 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import PhoneScreen from '../../components/PhoneScreen';
-import { scenarios } from '../../data/scenarios';
-import type { ScenarioOption } from '../../types';
+import {
+  getStoredToken,
+  fetchAdminScenario,
+  updateScenario,
+  type AdminScenario,
+  type AdminOption,
+} from '../api';
 import {
   PRIMARY_BUTTON,
   SECONDARY_BUTTON,
@@ -29,31 +34,76 @@ function BackArrow() {
   );
 }
 
-const POINT_OPTIONS: ScenarioOption['points'][] = [0, 5, 10];
+const POINT_OPTIONS: AdminOption['points'][] = [0, 5, 10];
 
-// ВАЖНО: правки здесь пока хранятся только в состоянии компонента и
-// пропадают при обновлении страницы — реального сохранения на сервер
-// ещё нет (нужен эндпоинт вроде PATCH /api/scenarios/:id). Кнопка
-// "Сохранить" сейчас просто эмулирует успех, чтобы было видно, где
-// подключать реальный запрос.
+type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+
 export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditScreenProps) {
-  const original = scenarios.find((s) => s.id === scenarioId);
-  const [code, setCode] = useState(original?.code ?? '');
-  const [description, setDescription] = useState(original?.description ?? '');
-  const [options, setOptions] = useState<ScenarioOption[]>(original?.options ?? []);
-  const [saved, setSaved] = useState(false);
+  const token = getStoredToken();
+  const [original, setOriginal] = useState<AdminScenario | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [code, setCode] = useState('');
+  const [description, setDescription] = useState('');
+  const [options, setOptions] = useState<AdminOption[]>([]);
+  const [saveState, setSaveState] = useState<SaveState>('idle');
 
-  if (!original) {
+  useEffect(() => {
+    if (!token) return;
+    fetchAdminScenario(token, scenarioId)
+      .then((scenario) => {
+        setOriginal(scenario);
+        setCode(scenario.code);
+        setDescription(scenario.description);
+        setOptions(scenario.options);
+      })
+      .catch(() => setLoadError(true));
+  }, [token, scenarioId]);
+
+  if (loadError) {
     return (
       <PhoneScreen>
-        <p className="text-ink">Сценарий не найден.</p>
+        <p className="text-ink">Не удалось загрузить сценарий.</p>
       </PhoneScreen>
     );
   }
 
-  const updateOption = (id: string, patch: Partial<ScenarioOption>) => {
+  if (!original) {
+    return (
+      <PhoneScreen>
+        <p className="text-ink">Загрузка…</p>
+      </PhoneScreen>
+    );
+  }
+
+  const updateOption = (id: number, patch: Partial<AdminOption>) => {
     setOptions((prev) => prev.map((o) => (o.id === id ? { ...o, ...patch } : o)));
-    setSaved(false);
+    setSaveState('idle');
+  };
+
+  const handleSave = async () => {
+    if (!token) return;
+    setSaveState('saving');
+    try {
+      await updateScenario(token, scenarioId, {
+        code,
+        category: original.category,
+        description,
+        visual: original.visual,
+        optionsHeading: original.optionsHeading,
+        isActive: original.isActive,
+        options: options.map((o, index) => ({
+          id: o.id,
+          code: o.code,
+          label: o.label,
+          points: o.points,
+          explanation: o.explanation,
+          orderIndex: index,
+        })),
+      });
+      setSaveState('saved');
+    } catch {
+      setSaveState('error');
+    }
   };
 
   return (
@@ -76,7 +126,7 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
             value={code}
             onChange={(e) => {
               setCode(e.target.value);
-              setSaved(false);
+              setSaveState('idle');
             }}
             placeholder="название"
             className={`flex-1 min-w-0 bg-white px-3 py-3 text-[14px] text-ink ${FIELD}`}
@@ -94,7 +144,7 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
           value={description}
           onChange={(e) => {
             setDescription(e.target.value);
-            setSaved(false);
+            setSaveState('idle');
           }}
           placeholder="напишите вопрос"
           rows={3}
@@ -105,7 +155,7 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
           {options.map((option) => (
             <div key={option.id}>
               <div className="flex items-center gap-3 mb-2">
-                <span className="font-bold text-ink shrink-0">{option.id}</span>
+                <span className="font-bold text-ink shrink-0">{option.code}</span>
                 <div className="flex items-center gap-3">
                   {POINT_OPTIONS.map((pointValue) => (
                     <label
@@ -142,12 +192,19 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
           ))}
         </div>
 
+        {saveState === 'error' && (
+          <p className="text-[13px] text-red-600 mt-4">
+            Не удалось сохранить изменения. Попробуйте ещё раз.
+          </p>
+        )}
+
         <button
           type="button"
-          onClick={() => setSaved(true)}
-          className={`w-full rounded-[5px] text-white text-[15px] font-bold py-4 mt-6 mb-4 ${PRIMARY_BUTTON}`}
+          onClick={handleSave}
+          disabled={saveState === 'saving'}
+          className={`w-full rounded-[5px] text-white text-[15px] font-bold py-4 mt-6 mb-4 disabled:opacity-60 ${PRIMARY_BUTTON}`}
         >
-          {saved ? 'Сохранено ✓' : 'Сохранить'}
+          {saveState === 'saving' ? 'Сохранение…' : saveState === 'saved' ? 'Сохранено ✓' : 'Сохранить'}
         </button>
       </div>
     </PhoneScreen>

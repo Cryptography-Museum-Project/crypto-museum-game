@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import PhoneScreen from '../../components/PhoneScreen';
 import circlesBg from '../../assets/circles.png';
+import { login } from '../api';
 import {
   PRIMARY_BUTTON,
   ICON_BUTTON,
@@ -29,10 +30,26 @@ function EyeToggleIcon({ visible }: { visible: boolean }) {
   );
 }
 
-// Пока без реального бэкенда — форма ничего не проверяет, "Войти" просто
-// пускает внутрь админки. Подключить настоящую авторизацию, когда будет API.
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      await login(username, password);
+      onLogin();
+    } catch {
+      setError('Неверный логин или пароль');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <PhoneScreen>
@@ -52,22 +69,22 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           цифрового дня
         </h1>
 
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            onLogin();
-          }}
-          className="mt-8 flex flex-col gap-3"
-        >
+        <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-3">
           <input
             type="text"
-            placeholder="почта или телефон"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="логин"
+            autoComplete="username"
             className={`w-full bg-white rounded-none px-4 py-3.5 text-[15px] text-ink placeholder:text-muted ${FIELD}`}
           />
           <div className="relative">
             <input
               type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="пароль"
+              autoComplete="current-password"
               className={`w-full bg-white rounded-none px-4 py-3.5 text-[15px] text-ink placeholder:text-muted pr-11 ${FIELD}`}
             />
             <button
@@ -79,6 +96,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               <EyeToggleIcon visible={showPassword} />
             </button>
           </div>
+
+          {error && <p className="text-[13px] text-red-600">{error}</p>}
 
           <div className="flex items-center justify-between mt-1 text-[13px]">
             <label className="flex items-center gap-2 text-ink">
@@ -92,9 +111,10 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
           <button
             type="submit"
-            className={`mt-3 w-full rounded-[5px] text-white text-[15px] font-bold py-4 flex items-center justify-center gap-2 ${PRIMARY_BUTTON}`}
+            disabled={isSubmitting}
+            className={`mt-3 w-full rounded-[5px] text-white text-[15px] font-bold py-4 flex items-center justify-center gap-2 disabled:opacity-60 ${PRIMARY_BUTTON}`}
           >
-            ВОЙТИ
+            {isSubmitting ? 'ВХОД…' : 'ВОЙТИ'}
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path
                 d="M6 3L11 8L6 13"
