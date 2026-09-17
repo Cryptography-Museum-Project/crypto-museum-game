@@ -59,3 +59,35 @@ button {
   -webkit-appearance: none;
   appearance: none;
 }
+
+/* Буквы заголовка "Маршрут цифрового дня" на стартовом экране появляются
+   по одной, с небольшой задержкой между ними (см. LandingScreen.tsx —
+   там же выставляется animation-delay для каждой буквы через inline
+   style). Лёгкое смещение вверх + рост прозрачности — тот же общий
+   характер движения, что и в макете (Figma-прототип), без лишней
+   "театральности". */
+@keyframes letter-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(0.3em);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.letter-reveal {
+  display: inline-block;
+  opacity: 0;
+  animation: letter-reveal 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Кому анимация мешает (укачивание, вестибулярные нарушения) — тексту
+   уже нечего терять: показываем сразу целиком, без движения. */
+@media (prefers-reduced-motion: reduce) {
+  .letter-reveal {
+    animation: none;
+    opacity: 1;
+  }
+}

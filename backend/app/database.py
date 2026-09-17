@@ -5,7 +5,7 @@
 с базой данных через обычные Python-классы, не переходя на "сырой" SQL.
 """
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from app.config import settings
@@ -35,3 +35,30 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def run_light_migrations() -> None:
+    """
+    Точечные "миграции" для баз, созданных до появления новой колонки.
+
+    В проекте нет Alembic (пока это не настроено отдельно — см. заметки
+    по хардненингу бэкенда), а Base.metadata.create_all() создаёт только
+    ОТСУТСТВУЮЩИЕ таблицы целиком и не трогает уже существующие — то есть
+    если у кого-то в команде уже есть локальный game.db, созданный до
+    появления поля image_url в модели Scenario, само поле там не появится
+    и запросы начнут падать ("no such column: scenarios.image_url").
+
+    Здесь — самый простой возможный вариант миграции: смотрим, чего не
+    хватает в реальной таблице по сравнению с моделью, и добавляем это
+    через ALTER TABLE. Подходит для одной-двух колонок на маленьком
+    учебном проекте; если/когда дойдут руки до Alembic — это можно
+    полностью удалить.
+    """
+    inspector = inspect(engine)
+    if "scenarios" not in inspector.get_table_names():
+        return  # таблицы ещё нет — её создаст create_all(), колонка будет сразу
+
+    existing_columns = {col["name"] for col in inspector.get_columns("scenarios")}
+    if "image_url" not in existing_columns:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE scenarios ADD COLUMN image_url VARCHAR(255)"))

@@ -5,12 +5,21 @@ import Footer from '../components/Footer';
 import homeIcon from '../assets/house-icon.svg';
 import replayIcon from '../assets/replay-icon.svg';
 import bastionLogo from '../assets/bastion-logo.svg';
-import { TICKET_URL } from '../constants';
-import { getTier } from '../data/tiers';
+import { TICKET_URL, EXHIBITION_URL } from '../constants';
+import type { FinishResponse } from '../api/game';
 import { PRIMARY_BUTTON, ICON_BUTTON, TEXT_LINK, FOCUS_RING } from '../styles/interactive';
+
+// Тот же формат уровня, что возвращает POST /api/sessions/{id}/finish —
+// см. FinishResponse в api/game.ts. ResultScreen больше не считает
+// уровень и его тексты сам (раньше — через getTier() из локального
+// data/tiers.ts): и score, и tier должны приходить с backend, иначе
+// правки уровней в админ-панели ("Профили") никогда не долетят до
+// реальной игры.
+type ResultTier = FinishResponse['tier'];
 
 interface ResultScreenProps {
   score: number;
+  tier: ResultTier;
   onHome?: () => void;
   onReplay?: () => void;
   onOpenMemo?: () => void;
@@ -18,6 +27,37 @@ interface ResultScreenProps {
 
 const PROMO_CODE = '59FG-SDFG-DGK9';
 const MAX_INDEX = 100;
+
+// Иконка "поделиться" — три узла, соединённые линиями (привычный
+// паттерн иконки шаринга). Рисуем инлайн через currentColor, как
+// остальные иконки без подписи в проекте (см. admin/TopNav),
+// чтобы цвет можно было менять через text-* классы, не трогая сам SVG.
+function ShareIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <circle cx="6" cy="12" r="2.6" stroke="currentColor" strokeWidth="1.7" />
+      <circle cx="18" cy="5.5" r="2.6" stroke="currentColor" strokeWidth="1.7" />
+      <circle cx="18" cy="18.5" r="2.6" stroke="currentColor" strokeWidth="1.7" />
+      <path
+        d="M8.2 10.7L15.8 6.8M8.2 13.3L15.8 17.2"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+// Текст, который уходит при "поделиться" — и в Web Share API, и в
+// буфер обмена как запасной вариант. Без промокода: его и так видно
+// на экране отдельной строкой, а в шаринге он выглядел бы как реклама.
+function buildShareText(score: number, tierLevel: string): string {
+  return (
+    `Мой индекс цифровой безопасности: ${score}/${MAX_INDEX} (уровень: ${tierLevel}). ` +
+    `Пройди игру и проверь свой на выставке «Ключ к доверию. Безопасность в эпоху высоких технологий» ` +
+    `в Музее криптографии!`
+  );
+}
 
 // Делает слово "памятку/памятка/Памятка" внутри текста кликабельной ссылкой
 // на экран MemoScreen, не трогая остальной текст.
@@ -44,10 +84,26 @@ function renderWithMemoLink(text: string, onOpenMemo?: () => void) {
 // Здесь, в отличие от TopBar на других экранах, шкала не сегментирована —
 // это одна сплошная полоса, залитая на % от итогового балла (0-100),
 // а не отсчёт "сценарий N из 10".
-function ScoreBar({ score, onHome }: { score: number; onHome?: () => void }) {
+//
+// Кнопка "поделиться" стоит рядом со счётом, а не рядом с домиком —
+// домик скрыт на десктопе (xl:hidden), а поделиться результатом должно
+// быть доступно на любом экране. Группируем счёт и кнопку вместе, тогда
+// на десктопе (где виден только этот блок, т.к. justify-end) они всё
+// равно остаются прижаты друг к другу и выровнены по правому краю.
+function ScoreBar({
+  score,
+  onHome,
+  onShare,
+  shared,
+}: {
+  score: number;
+  onHome?: () => void;
+  onShare: () => void;
+  shared: boolean;
+}) {
   return (
     <div>
-      <div className="flex items-center justify-between mb-2 xl:justify-end">
+      <div className="flex items-center justify-between mb-2 xl:justify-end xl:gap-3">
         <button
           type="button"
           onClick={onHome}
@@ -56,9 +112,23 @@ function ScoreBar({ score, onHome }: { score: number; onHome?: () => void }) {
         >
           <img src={homeIcon} alt="" className="w-5 h-5" />
         </button>
-        <span className="font-halvar font-bold text-xs text-muted tabular-nums">
-          {score} / {MAX_INDEX}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="font-halvar font-bold text-xs text-muted tabular-nums">
+            {score} / {MAX_INDEX}
+          </span>
+          <button
+            type="button"
+            onClick={onShare}
+            aria-label="Поделиться результатом"
+            className={`flex items-center gap-1 p-1.5 -m-1.5 text-muted hover:text-brand ${ICON_BUTTON}`}
+          >
+            {shared ? (
+              <span className="text-[11px] font-semibold text-brand">скопировано ✓</span>
+            ) : (
+              <ShareIcon />
+            )}
+          </button>
+        </div>
       </div>
       <div className="h-1.5 rounded-full bg-[#D3D3DB] overflow-hidden">
         <div
@@ -70,9 +140,9 @@ function ScoreBar({ score, onHome }: { score: number; onHome?: () => void }) {
   );
 }
 
-export default function ResultScreen({ score, onHome, onReplay, onOpenMemo }: ResultScreenProps) {
+export default function ResultScreen({ score, tier, onHome, onReplay, onOpenMemo }: ResultScreenProps) {
   const [copied, setCopied] = useState(false);
-  const tier = getTier(score);
+  const [shared, setShared] = useState(false);
 
   const handleCopy = async () => {
     try {
@@ -84,10 +154,40 @@ export default function ResultScreen({ score, onHome, onReplay, onOpenMemo }: Re
     }
   };
 
+  // Предпочитаем нативный Web Share API — на телефоне (а посетители
+  // выставки играют именно с телефона, отсканировав QR-код) он открывает
+  // системное меню "поделиться" с мессенджерами, которые уже установлены.
+  // Если API недоступен (десктопные браузеры без поддержки, старые
+  // версии) — просто копируем текст результата в буфер обмена и
+  // показываем то же подтверждение, что и для промокода.
+  const handleShare = async () => {
+    const shareText = buildShareText(score, tier.level);
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Ключ к доверию — мой результат',
+          text: shareText,
+          url: EXHIBITION_URL,
+        });
+      } catch {
+        // Пользователь закрыл системное меню или шаринг не удался —
+        // ничего дополнительно не делаем, это не ошибка.
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(`${shareText} ${EXHIBITION_URL}`);
+      setShared(true);
+      setTimeout(() => setShared(false), 2000);
+    } catch {
+      // clipboard может быть недоступен — просто игнорируем
+    }
+  };
+
   return (
     <PhoneScreen>
       <GameMasthead onHome={onHome} />
-      <ScoreBar score={score} onHome={onHome} />
+      <ScoreBar score={score} onHome={onHome} onShare={handleShare} shared={shared} />
 
       <div className="flex flex-col flex-1 xl:grid xl:grid-cols-[1fr_220px] xl:gap-x-16 xl:items-start xl:mt-6">
         <div className="flex flex-col items-center mt-8 xl:items-end xl:mt-0 xl:col-start-2 xl:row-start-1">
@@ -144,14 +244,25 @@ export default function ResultScreen({ score, onHome, onReplay, onOpenMemo }: Re
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onReplay}
-          className={`hidden xl:flex items-center gap-1.5 text-ink text-[18px] mt-4 xl:mt-6 xl:col-start-1 xl:row-start-4 rounded-sm ${TEXT_LINK}`}
-        >
-          пройти ещё раз
-          <img src={replayIcon} alt="" className="w-4 h-4" />
-        </button>
+        <div className="hidden xl:flex items-center gap-6 mt-4 xl:mt-6 xl:col-start-1 xl:row-start-4">
+          <button
+            type="button"
+            onClick={onReplay}
+            className={`flex items-center gap-1.5 text-ink text-[18px] rounded-sm ${TEXT_LINK}`}
+          >
+            пройти ещё раз
+            <img src={replayIcon} alt="" className="w-4 h-4" />
+          </button>
+
+          <button
+            type="button"
+            onClick={handleShare}
+            className={`flex items-center gap-1.5 text-ink text-[18px] rounded-sm ${TEXT_LINK}`}
+          >
+            {shared ? 'скопировано ✓' : 'поделиться результатом'}
+            <ShareIcon />
+          </button>
+        </div>
 
         <Footer />
       </div>

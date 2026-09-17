@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import PhoneScreen from '../../components/PhoneScreen';
-import BottomNav, { type AdminTab } from '../components/BottomNav';
+import TopNav, { type AdminTab } from '../components/TopNav';
 import { getStoredToken, fetchAdminScenarios, type AdminScenario } from '../api';
 import { SECONDARY_BUTTON, FOCUS_RING } from '../../styles/interactive';
 
@@ -28,6 +28,8 @@ export default function ScenariosListScreen({
 
   return (
     <PhoneScreen>
+      <TopNav active="scenarios" onChange={onChangeTab} />
+
       <button
         type="button"
         onClick={onAddScenario}
@@ -57,8 +59,6 @@ export default function ScenariosListScreen({
           </button>
         ))}
       </div>
-
-      <BottomNav active="scenarios" onChange={onChangeTab} />
     </PhoneScreen>
   );
 }

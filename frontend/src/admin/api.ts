@@ -1,5 +1,5 @@
 import type { Category, VisualType } from '../types';
-import { apiRequest } from '../api/client';
+import { apiRequest, API_BASE_URL, ApiError } from '../api/client';
 
 // ---------------------------------------------------------------------------
 // Токен администратора — храним в localStorage, чтобы вход не слетал при
@@ -118,6 +118,7 @@ export interface AdminScenario {
   category: Category;
   description: string;
   visual: VisualType;
+  imageUrl: string | null;
   optionsHeading: string;
   isActive: boolean;
   options: AdminOption[];
@@ -160,6 +161,47 @@ export function updateScenario(
   });
 }
 
+// Загрузка/удаление фото сценария — отдельные эндпоинты (multipart для
+// файла), поэтому не через apiRequest (он всегда шлёт JSON) и не через
+// updateScenario (та полностью перезаписывает сценарий и варианты ответов
+// разом и ничего не знает про файлы).
+export async function uploadScenarioImage(
+  token: string,
+  scenarioId: number,
+  file: File,
+): Promise<AdminScenario> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`${API_BASE_URL}/api/admin/scenarios/${scenarioId}/image`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    // Content-Type для multipart/form-data (с нужным boundary) браузер
+    // выставляет сам, если задать его руками — запрос сломается.
+    body: formData,
+  });
+
+  if (!response.ok) {
+    let detail = response.statusText;
+    try {
+      const data = (await response.json()) as { detail?: string };
+      if (data?.detail) detail = data.detail;
+    } catch {
+      // тело ответа не JSON — оставляем statusText как есть
+    }
+    throw new ApiError(response.status, detail);
+  }
+
+  return (await response.json()) as AdminScenario;
+}
+
+export function deleteScenarioImage(token: string, scenarioId: number): Promise<AdminScenario> {
+  return apiRequest(`/api/admin/scenarios/${scenarioId}/image`, {
+    method: 'DELETE',
+    token,
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Редактирование уровней (профилей)
 // ---------------------------------------------------------------------------
@@ -179,14 +221,21 @@ export function fetchTiers(token: string): Promise<AdminTier[]> {
   return apiRequest('/api/admin/tiers', { token });
 }
 
-export function updateTierDescription(
+export interface TierUpdatePayload {
+  title?: string;
+  body?: string;
+  cta?: string;
+  adminDescription?: string;
+}
+
+export function updateTier(
   token: string,
   tierKey: string,
-  adminDescription: string,
+  patch: TierUpdatePayload,
 ): Promise<AdminTier> {
   return apiRequest(`/api/admin/tiers/${tierKey}`, {
     method: 'PATCH',
-    body: { adminDescription },
+    body: patch,
     token,
   });
 }

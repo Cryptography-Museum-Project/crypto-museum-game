@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import PhoneScreen from '../../components/PhoneScreen';
-import BottomNav, { type AdminTab } from '../components/BottomNav';
+import TopNav, { type AdminTab } from '../components/TopNav';
 import LineChart from '../components/LineChart';
 import DonutChart from '../components/DonutChart';
 import {
@@ -142,12 +142,12 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
   if (error) {
     return (
       <PhoneScreen>
+        <TopNav active="overview" onChange={onChangeTab} />
         <div className="flex-1 flex items-center justify-center text-center px-4">
           <p className="text-ink text-[14px]">
             Не удалось загрузить статистику. Проверьте, что backend запущен, и обновите страницу.
           </p>
         </div>
-        <BottomNav active="overview" onChange={onChangeTab} />
       </PhoneScreen>
     );
   }
@@ -155,44 +155,45 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
   if (!overview) {
     return (
       <PhoneScreen>
+        <TopNav active="overview" onChange={onChangeTab} />
         <div className="flex-1 flex items-center justify-center">
           <p className="text-ink text-[14px]">Загрузка статистики…</p>
         </div>
-        <BottomNav active="overview" onChange={onChangeTab} />
       </PhoneScreen>
     );
   }
 
   return (
     <PhoneScreen>
+      <TopNav active="overview" onChange={onChangeTab} />
       <div className="flex-1 overflow-y-auto -mx-5 px-5">
         <PeriodFilter period={period} onChange={setPeriod} />
 
         <div className="grid grid-cols-2 gap-3">
           <StatCard
-            label="прохождения"
+            label="Прохождения"
             value={overview.playthroughs.value.toLocaleString('ru-RU')}
             delta={fmtDelta(overview.playthroughs.deltaPct, '%')}
           />
           <StatCard
-            label="средний индекс"
+            label="Средний индекс"
             value={`${overview.averageIndex.value}/${overview.averageIndex.outOf}`}
             delta={fmtDelta(overview.averageIndex.delta)}
           />
           <StatCard
-            label="завершили игру"
+            label="Завершили игру"
             value={`${overview.completionRate.value}%`}
             delta={fmtDelta(overview.completionRate.deltaPct, '%')}
           />
           <StatCard
-            label="среднее время"
+            label="Среднее время"
             value={`${overview.averageTimeMin.value} мин.`}
             delta={fmtDelta(overview.averageTimeMin.delta)}
           />
         </div>
 
         <div className="bg-white rounded-[5px] p-4 mt-3">
-          <p className="text-[12px] font-bold text-ink mb-2">динамика — прохождения по периодам</p>
+          <p className="text-[12px] font-bold text-ink mb-2">Динамика — прохождения по периодам</p>
           {overview.timeline.labels.length > 0 ? (
             <LineChart points={overview.timeline.values} labels={overview.timeline.labels} />
           ) : (
@@ -201,7 +202,7 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
         </div>
 
         <div className="bg-white rounded-[5px] p-4 mt-3">
-          <p className="text-[12px] font-bold text-ink mb-1">ошибки по сценариям</p>
+          <p className="text-[12px] font-bold text-ink mb-1">Ошибки по сценариям</p>
           <p className="text-[11px] text-muted mb-3">
             нажмите на сценарий, чтобы увидеть разбивку по ответам
           </p>
@@ -216,14 +217,24 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
                 <span className="text-[11px] text-muted w-7 shrink-0 tabular-nums">
                   {scenario.errorRate}%
                 </span>
+                {/* Номер сценария и его код — сразу после процента, оба
+                    с фиксированной шириной, поэтому номер всегда начинается
+                    на одном уровне независимо от длины названия сценария.
+                    Раньше это было после полосы (flex-1), из-за чего полоса
+                    "съедала" разное количество места и номер каждый раз
+                    сдвигался. Короткие (однозначные) номера дополняются
+                    пробелом слева до ширины двузначных. */}
+                <span className="text-[12px] text-ink shrink-0 flex items-baseline gap-1">
+                  <span className="tabular-nums text-right inline-block w-[1.1em]">
+                    {String(scenario.scenarioId).padStart(2, '\u00A0')}
+                  </span>
+                  <span>| {scenario.code.toLowerCase()}</span>
+                </span>
                 <span className="flex-1 h-1.5 bg-canvas rounded-full overflow-hidden">
                   <span
                     className="block h-full bg-brand rounded-full"
                     style={{ width: `${Math.min(scenario.errorRate * 4, 100)}%` }}
                   />
-                </span>
-                <span className="text-[12px] text-ink shrink-0">
-                  {scenario.scenarioId} | {scenario.code.toLowerCase()}
                 </span>
                 <svg
                   width="14"
@@ -246,11 +257,19 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
         </div>
 
         <div className="bg-white rounded-[5px] p-4 mt-3">
-          <p className="text-[12px] font-bold text-ink mb-3">частые ошибки</p>
+          <p className="text-[12px] font-bold text-ink mb-3">Частые ошибки</p>
           {mistakes.length === 0 && <p className="text-[12px] text-muted">Пока нет данных.</p>}
           {mistakes.map((mistake) => (
-            <div key={`${mistake.scenarioId}-${mistake.optionLabel}`} className="flex gap-3 mb-3 last:mb-0">
-              <span className="font-halvar font-bold text-brand text-[26px] shrink-0">
+            <div key={`${mistake.scenarioId}-${mistake.optionLabel}`} className="flex gap-4 mb-3 last:mb-0">
+              {/* Фиксированная ширина у процента — иначе текст справа
+                  сдвигается в зависимости от того, сколько у процента
+                  цифр (5% короче, чем 42.5%), и колонка "гуляет".
+                  Ширина увеличена (с запасом под "100%" — три полные
+                  цифры без точки шире, чем "66.7%" в этом же шрифте) и
+                  добавлен nowrap, чтобы число не переносилось и не
+                  наезжало на текст справа. gap-4 вместо gap-3 — заметный
+                  отступ между процентом и текстом, как попросили. */}
+              <span className="font-halvar font-bold text-brand text-[26px] shrink-0 w-24 tabular-nums whitespace-nowrap">
                 {mistake.pickedPercent}%
               </span>
               <div>
@@ -265,7 +284,7 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
 
         <div className="bg-white rounded-[5px] p-4 mt-3 mb-2">
           <p className="text-[12px] font-bold text-ink mb-3">
-            профили — {overview.playthroughs.value.toLocaleString('ru-RU')} чел.
+            Профили — {overview.playthroughs.value.toLocaleString('ru-RU')} чел.
           </p>
           <div className="flex items-center gap-5">
             <DonutChart
@@ -294,8 +313,6 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
           </div>
         </div>
       </div>
-
-      <BottomNav active="overview" onChange={onChangeTab} />
     </PhoneScreen>
   );
 }

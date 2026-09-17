@@ -43,6 +43,42 @@ RU_MONTHS = [
 # ---------------------------------------------------------------------------
 
 
+def percentages_of(counts: list[int]) -> list[float]:
+    """Считает проценты (с точностью до 0.1) так, чтобы они гарантированно
+    суммировались ровно в 100.0 — там, где сумма counts > 0.
+
+    Если просто округлять каждую долю по отдельности (round(count/total*100, 1)),
+    сумма почти никогда не даёт ровно 100: например 1/3, 1/3, 1/3 даёт
+    33.3+33.3+33.3 = 99.9, а не 100.0. На маленьких выборках (типично для
+    админки на старте выставки, когда прохождений мало) это особенно
+    заметно и выглядит как "неправильный процент" при проверке вручную.
+
+    Используем метод наибольшего остатка: округляем все доли вниз до
+    0.1, а оставшиеся "хвосты" (по 0.1) раздаём долям с наибольшим
+    дробным остатком — так сумма всегда равна 100.0 (или 0, если счёт
+    пустой), а каждое отдельное значение отличается от "честной" доли
+    не больше чем на 0.1.
+    """
+    total = sum(counts)
+    if total <= 0:
+        return [0.0 for _ in counts]
+
+    # Работаем в десятых долях процента (0..1000), чтобы не гонять float
+    # ошибки округления — переводим обратно в проценты только в конце.
+    raw = [count / total * 1000 for count in counts]
+    floored = [int(r) for r in raw]  # округление вниз, в десятых
+    remainder = 1000 - sum(floored)  # сколько десятых долей ещё "не роздано"
+
+    # Раздаём недостающие десятые доли по одной тем, у кого больше всего
+    # дробный остаток (наибольший остаток => этот вариант "заслуживает"
+    # округление вверх сильнее остальных).
+    order = sorted(range(len(counts)), key=lambda i: raw[i] - floored[i], reverse=True)
+    for i in order[:remainder]:
+        floored[i] += 1
+
+    return [value / 10 for value in floored]
+
+
 def period_bounds(period: Period, db: Session) -> tuple[datetime, datetime, datetime, datetime]:
     """Возвращает (начало периода, сейчас, начало предыдущего периода, конец предыдущего).
 
@@ -202,24 +238,28 @@ def scenario_stats(
         )
         error_rate = round(wrong_answers / total_answers * 100, 1) if total_answers else 0.0
 
-        options: list[OptionStat] = []
-        for option in scenario.options:
-            picked = (
-                db.query(func.count(SessionAnswer.id))
-                .filter(SessionAnswer.option_id == option.id)
-                .scalar()
-                or 0
+        # Считаем "сколько раз выбрали" по каждому варианту сразу списком —
+        # проценты нужно раздавать все вместе (см. percentages_of), а не
+        # по одному, иначе они не будут гарантированно суммироваться в 100.
+        picked_counts = [
+            db.query(func.count(SessionAnswer.id))
+            .filter(SessionAnswer.option_id == option.id)
+            .scalar()
+            or 0
+            for option in scenario.options
+        ]
+        picked_percents = percentages_of(picked_counts)
+
+        options: list[OptionStat] = [
+            OptionStat(
+                id=option.id,
+                code=option.code,
+                label=option.label,
+                points=option.points,
+                picked_percent=picked_percent,
             )
-            picked_percent = round(picked / total_answers * 100, 1) if total_answers else 0.0
-            options.append(
-                OptionStat(
-                    id=option.id,
-                    code=option.code,
-                    label=option.label,
-                    points=option.points,
-                    picked_percent=picked_percent,
-                )
-            )
+            for option, picked_percent in zip(scenario.options, picked_percents)
+        ]
 
         result.append(
             ScenarioStat(
@@ -246,22 +286,23 @@ def profile_distribution(
     db: Session = Depends(get_db),
     admin: AdminUser = Depends(get_current_admin),
 ):
-    total_finished = (
-        db.query(func.count(GameSession.id)).filter(GameSession.finished_at.isnot(None)).scalar() or 0
-    )
-
     tiers = db.query(Tier).order_by(Tier.order_index).all()
-    result = []
-    for tier in tiers:
-        count = (
-            db.query(func.count(GameSession.id))
-            .filter(GameSession.tier_id == tier.id, GameSession.finished_at.isnot(None))
-            .scalar()
-            or 0
-        )
-        percent = round(count / total_finished * 100, 1) if total_finished else 0.0
-        result.append(ProfileDistributionItem(key=tier.key, label=tier.level, percent=percent))
-    return result
+    # Как и с процентами по вариантам ответа: считаем счётчики по всем
+    # уровням сразу и раздаём проценты одним пакетом (percentages_of), чтобы
+    # круговая диаграмма и подписи под ней всегда суммировались в 100%,
+    # а не в 99.9%/100.1% из-за независимого округления каждой доли.
+    counts = [
+        db.query(func.count(GameSession.id))
+        .filter(GameSession.tier_id == tier.id, GameSession.finished_at.isnot(None))
+        .scalar()
+        or 0
+        for tier in tiers
+    ]
+    percents = percentages_of(counts)
+    return [
+        ProfileDistributionItem(key=tier.key, label=tier.level, percent=percent)
+        for tier, percent in zip(tiers, percents)
+    ]
 
 
 # ---------------------------------------------------------------------------

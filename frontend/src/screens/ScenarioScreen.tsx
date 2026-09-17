@@ -5,7 +5,7 @@ import GameMasthead from '../components/GameMasthead';
 import Footer from '../components/Footer';
 import OptionsList from '../components/OptionsList';
 import ScenarioVisualImage from '../components/visuals/ScenarioVisualImage';
-import { TOTAL_SCENARIOS } from '../data/scenarios';
+import { API_BASE_URL } from '../api/client';
 
 import smartphoneNotification from '../assets/scenario-visuals/smartphone-notification.png';
 import taxiPermissions from '../assets/scenario-visuals/taxi-permissions.png';
@@ -20,11 +20,26 @@ import purchasePhone from '../assets/scenario-visuals/purchase-phone.png';
 
 interface ScenarioScreenProps {
   scenario: Scenario;
+  // Общее число сценариев в текущей игре — приходит из App.tsx (длина
+  // списка, полученного от backend), а не захардкожено здесь. Раньше это
+  // было отдельной константой TOTAL_SCENARIOS в data/scenarios.ts — она
+  // всегда равнялась 10 и просто дублировала то, что и так известно из
+  // уже загруженных с backend сценариев.
+  total: number;
   onSelectOption?: (optionId: string) => void;
   onHome?: () => void;
 }
 
 function renderVisual(scenario: Scenario) {
+  // Кастомное фото из админки — если куратор его загрузил, оно должно
+  // перекрывать встроенную иллюстрацию, а не просто быть на неё похожим.
+  // imageUrl приходит с backend относительным ("/uploads/..."), backend
+  // и frontend живут на разных адресах (localhost:8000 / localhost:5173),
+  // поэтому путь нужно склеить с базовым адресом API.
+  if (scenario.imageUrl) {
+    return <ScenarioVisualImage src={`${API_BASE_URL}${scenario.imageUrl}`} alt={scenario.code} />;
+  }
+
   switch (scenario.visual) {
     case 'notification':
       return (
@@ -80,11 +95,11 @@ function renderVisual(scenario: Scenario) {
   }
 }
 
-export default function ScenarioScreen({ scenario, onSelectOption, onHome }: ScenarioScreenProps) {
+export default function ScenarioScreen({ scenario, total, onSelectOption, onHome }: ScenarioScreenProps) {
   return (
     <PhoneScreen>
       <GameMasthead onHome={onHome} />
-      <TopBar current={scenario.id} total={TOTAL_SCENARIOS} onHome={onHome} />
+      <TopBar current={scenario.id} total={total} onHome={onHome} />
 
       <div className="flex flex-col flex-1 xl:grid xl:grid-cols-[1fr_260px] xl:gap-x-16 xl:items-start xl:mt-4">
         <h1 className="font-halvar font-light text-brand text-[34px] xl:text-[29px] uppercase leading-none mt-5 xl:mt-0 xl:col-start-1 xl:row-start-1">

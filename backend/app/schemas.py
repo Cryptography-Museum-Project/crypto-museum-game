@@ -51,6 +51,7 @@ class ScenarioPublic(CamelModel):
     category: Category
     description: str
     visual: str
+    image_url: Optional[str] = None
     options_heading: str
     options: list[OptionPublic]
 

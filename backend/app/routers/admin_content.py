@@ -1,21 +1,59 @@
 """
 Редактирование игрового контента из админ-панели:
 - сценарии и их варианты ответов;
-- тексты уровней (профилей) результата.
+- тексты уровней (профилей) результата;
+- фото сценариев (загрузка файла поверх встроенной иллюстрации).
 
 Все эндпоинты здесь защищены — работают только с валидным токеном
 администратора (см. app/security.py::get_current_admin).
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+import os
+import uuid
+
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.models import AdminUser, Scenario, ScenarioOption, Tier
 from app.schemas import ScenarioAdmin, ScenarioUpdate, TierAdmin, TierUpdate
 from app.security import get_current_admin
 
 router = APIRouter(prefix="/api/admin", tags=["admin-content"])
+
+# ---------------------------------------------------------------------------
+# Фото сценариев — общие настройки для загрузки
+# ---------------------------------------------------------------------------
+
+# Ограничиваем и тип, и размер: во-первых, отдаём эти файлы напрямую как
+# статику (см. app/main.py), поэтому пускать что попало (например .svg
+# с встроенным script) небезопасно; во-вторых, это фото для маленькой
+# карточки в игре, 5 МБ более чем достаточно даже с большим запасом.
+ALLOWED_IMAGE_TYPES = {
+    "image/png": ".png",
+    "image/jpeg": ".jpg",
+    "image/webp": ".webp",
+}
+MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024  # 5 МБ
+
+SCENARIOS_UPLOAD_DIR = os.path.join(settings.upload_dir, "scenarios")
+
+
+def _delete_scenario_image_file(image_url: str | None) -> None:
+    """Удаляет файл предыдущего фото с диска, если он был.
+
+    Best-effort: если файла уже нет (например, кто-то удалил его руками)
+    — просто игнорируем, это не повод возвращать ошибку админу.
+    """
+    if not image_url:
+        return
+    filename = os.path.basename(image_url)
+    try:
+        os.remove(os.path.join(SCENARIOS_UPLOAD_DIR, filename))
+    except FileNotFoundError:
+        pass
+
 
 # ---------------------------------------------------------------------------
 # Сценарии
@@ -94,6 +132,70 @@ def update_scenario(
             )
         )
 
+    db.commit()
+    db.refresh(scenario)
+    return scenario
+
+
+@router.post("/scenarios/{scenario_id}/image", response_model=ScenarioAdmin)
+async def upload_scenario_image(
+    scenario_id: int,
+    file: UploadFile,
+    db: Session = Depends(get_db),
+    admin: AdminUser = Depends(get_current_admin),
+):
+    """
+    Загружает кастомное фото для сценария — если оно задано, игра
+    показывает его вместо встроенной иллюстрации (см. ScenarioScreen на
+    фронтенде). Заменяет предыдущее фото этого сценария, если оно было.
+    """
+    scenario = db.query(Scenario).filter(Scenario.id == scenario_id).first()
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Сценарий не найден")
+
+    extension = ALLOWED_IMAGE_TYPES.get(file.content_type or "")
+    if not extension:
+        raise HTTPException(
+            status_code=400,
+            detail="Поддерживаются только изображения: PNG, JPEG или WebP.",
+        )
+
+    contents = await file.read()
+    if len(contents) > MAX_IMAGE_SIZE_BYTES:
+        raise HTTPException(status_code=400, detail="Файл слишком большой (максимум 5 МБ).")
+    if not contents:
+        raise HTTPException(status_code=400, detail="Файл пустой.")
+
+    os.makedirs(SCENARIOS_UPLOAD_DIR, exist_ok=True)
+
+    # Уникальное имя файла на каждую загрузку (а не просто scenario-{id})
+    # — иначе браузер посетителя может закешировать старую картинку под
+    # тем же именем и не подхватить замену.
+    filename = f"scenario-{scenario_id}-{uuid.uuid4().hex}{extension}"
+    with open(os.path.join(SCENARIOS_UPLOAD_DIR, filename), "wb") as f:
+        f.write(contents)
+
+    _delete_scenario_image_file(scenario.image_url)
+    scenario.image_url = f"/uploads/scenarios/{filename}"
+    db.commit()
+    db.refresh(scenario)
+    return scenario
+
+
+@router.delete("/scenarios/{scenario_id}/image", response_model=ScenarioAdmin)
+def delete_scenario_image(
+    scenario_id: int,
+    db: Session = Depends(get_db),
+    admin: AdminUser = Depends(get_current_admin),
+):
+    """Убирает кастомное фото — сценарий возвращается к встроенной
+    иллюстрации (полю visual)."""
+    scenario = db.query(Scenario).filter(Scenario.id == scenario_id).first()
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Сценарий не найден")
+
+    _delete_scenario_image_file(scenario.image_url)
+    scenario.image_url = None
     db.commit()
     db.refresh(scenario)
     return scenario

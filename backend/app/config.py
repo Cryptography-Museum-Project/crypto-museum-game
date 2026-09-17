@@ -31,5 +31,11 @@ class Settings(BaseSettings):
     # конкретный домен фронтенда, например: "https://key-to-trust.ru"
     cors_allow_origins: str = "*"
 
+    # --- Загруженные файлы (сейчас — только фото сценариев из админки) ---
+    # По умолчанию — папка uploads рядом с приложением. В Docker
+    # переопределяется на /app/uploads (см. docker-compose.yml), куда
+    # смонтирован volume, чтобы фото не терялись при пересборке контейнера.
+    upload_dir: str = "uploads"
+
 
 settings = Settings()

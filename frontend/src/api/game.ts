@@ -17,11 +17,12 @@ interface ApiScenario {
   category: Scenario['category'];
   description: string;
   visual: Scenario['visual'];
+  imageUrl: string | null;
   optionsHeading: string;
   options: ApiOption[];
 }
 
-interface FinishResponse {
+export interface FinishResponse {
   id: string;
   totalScore: number;
   maxScore: number;
@@ -57,6 +58,7 @@ function toPlayableScenario(scenario: ApiScenario): PlayableScenario {
     category: scenario.category,
     description: scenario.description,
     visual: scenario.visual,
+    imageUrl: scenario.imageUrl,
     optionsHeading: scenario.optionsHeading,
     options: scenario.options.map((option) => ({
       id: option.code,
