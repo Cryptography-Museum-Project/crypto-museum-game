@@ -11,6 +11,55 @@ interface LandingScreenProps {
   onStart?: () => void;
 }
 
+// Задержка между появлением соседних букв — подобрано так, чтобы всё
+// название ("Маршрут" + "цифрового дня", 20 букв без пробелов и переноса
+// строки) успевало появиться примерно за секунду: не настолько быстро,
+// что эффект теряется, и не настолько медленно, что раздражает при
+// повторном заходе на стартовый экран.
+const LETTER_STEP_SECONDS = 0.045;
+
+// Разбивает строку на буквы-<span>, каждая — со своей задержкой анимации
+// (см. .letter-reveal в index.css). startIndex нужен, чтобы вторая строка
+// заголовка продолжала общий отсчёт задержки, а не начинала анимацию
+// заново с нуля — иначе перенос строки выглядел бы как две отдельные
+// надписи, а не одно слово, "проявляющееся" целиком.
+// Пробелы рендерятся как неразрывные (\u00A0): это короткий, специально
+// перенесённый вручную заголовок, а не свободный текст, — переноса
+// посреди слов быть не должно ни при каких условиях.
+function renderAnimatedLetters(text: string, startIndex: number) {
+  return text.split('').map((char, i) => (
+    <span
+      key={i}
+      className="letter-reveal"
+      style={{ animationDelay: `${(startIndex + i) * LETTER_STEP_SECONDS}s` }}
+    >
+      {char === ' ' ? '\u00A0' : char}
+    </span>
+  ));
+}
+
+// Заголовок собирается из букв-спанов (для анимации появления), но для
+// скринридеров и поиска на странице должен остаться обычным читаемым
+// текстом — поэтому сам текст задаётся через aria-label на обёртке,
+// а буквы внутри скрыты из accessibility-дерева (aria-hidden).
+function AnimatedTitle({ lines }: { lines: string[] }) {
+  let cursor = 0;
+  return (
+    <span aria-label={lines.join(' ')}>
+      {lines.map((line, lineIndex) => {
+        const letters = renderAnimatedLetters(line, cursor);
+        cursor += line.length;
+        return (
+          <span key={lineIndex} aria-hidden="true">
+            {letters}
+            {lineIndex < lines.length - 1 && <br />}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
 export default function LandingScreen({ onStart }: LandingScreenProps) {
   return (
     <PhoneScreen>
@@ -55,9 +104,7 @@ export default function LandingScreen({ onStart }: LandingScreenProps) {
         </p>
 
         <h1 className="font-halvar font-light text-brand text-[34px] xl:text-[44px] uppercase leading-[1.05] mt-5 underline decoration-2 underline-offset-4">
-          Маршрут
-          <br />
-          цифрового дня
+          <AnimatedTitle lines={['Маршрут', 'цифрового дня']} />
         </h1>
 
         <p className="text-ink text-[15px] xl:text-[18px] leading-snug mt-4 max-w-55 xl:max-w-none">

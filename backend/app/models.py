@@ -43,6 +43,11 @@ class Scenario(Base):
     category: Mapped[str] = mapped_column(String(32))  # Фишинг / Приватность / Wi-Fi / Финансы / Пароли / Устройства
     description: Mapped[str] = mapped_column(Text)
     visual: Mapped[str] = mapped_column(String(32))  # какой визуал показывать на фронте
+    # Кастомное фото, загруженное куратором через админку — если задано,
+    # игра показывает его вместо встроенной иллюстрации (см. visual выше).
+    # Храним только путь вида "/uploads/scenarios/xxx.png", отдаёт его
+    # StaticFiles (см. app/main.py); сам файл лежит на диске.
+    image_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
     options_heading: Mapped[str] = mapped_column(String(255), default="Ваши действия?")
     order_index: Mapped[int] = mapped_column(Integer, default=0)
     # is_active=False — "резервный" сценарий: хранится в базе, но не

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import PhoneScreen from '../../components/PhoneScreen';
-import BottomNav, { type AdminTab } from '../components/BottomNav';
-import { getStoredToken, fetchTiers, updateTierDescription, type AdminTier } from '../api';
+import TopNav, { type AdminTab } from '../components/TopNav';
+import { getStoredToken, fetchTiers, updateTier, type AdminTier } from '../api';
 import { PRIMARY_BUTTON, FIELD } from '../../styles/interactive';
 
 interface ProfilesScreenProps {
@@ -10,10 +10,32 @@ interface ProfilesScreenProps {
 
 type SaveState = 'idle' | 'saving' | 'saved';
 
+// То, что реально видит игрок на экране результата (ResultScreen):
+// title — необязательный короткий заголовок (у "новичка" в сидовых
+// данных он вообще пустой), body — основной текст разбора результата,
+// cta — приглашение на выставку. adminDescription — единственное поле
+// НЕ показывается игроку нигде; это заметка для команды/куратора при
+// просмотре этого же списка (например, план "что доработать в тексте").
+interface TierDraft {
+  title: string;
+  body: string;
+  cta: string;
+  adminDescription: string;
+}
+
+function draftFrom(tier: AdminTier): TierDraft {
+  return {
+    title: tier.title,
+    body: tier.body,
+    cta: tier.cta,
+    adminDescription: tier.adminDescription,
+  };
+}
+
 export default function ProfilesScreen({ onChangeTab }: ProfilesScreenProps) {
   const token = getStoredToken();
   const [tiers, setTiers] = useState<AdminTier[]>([]);
-  const [descriptions, setDescriptions] = useState<Record<string, string>>({});
+  const [drafts, setDrafts] = useState<Record<string, TierDraft>>({});
   const [saveState, setSaveState] = useState<Record<string, SaveState>>({});
   const [error, setError] = useState(false);
 
@@ -22,16 +44,23 @@ export default function ProfilesScreen({ onChangeTab }: ProfilesScreenProps) {
     fetchTiers(token)
       .then((data) => {
         setTiers(data);
-        setDescriptions(Object.fromEntries(data.map((t) => [t.key, t.adminDescription])));
+        setDrafts(Object.fromEntries(data.map((t) => [t.key, draftFrom(t)])));
       })
       .catch(() => setError(true));
   }, [token]);
 
+  const updateDraft = (tierKey: string, patch: Partial<TierDraft>) => {
+    setDrafts((prev) => ({ ...prev, [tierKey]: { ...prev[tierKey], ...patch } }));
+    setSaveState((prev) => ({ ...prev, [tierKey]: 'idle' }));
+  };
+
   const handleSave = async (tierKey: string) => {
     if (!token) return;
+    const draft = drafts[tierKey];
+    if (!draft) return;
     setSaveState((prev) => ({ ...prev, [tierKey]: 'saving' }));
     try {
-      await updateTierDescription(token, tierKey, descriptions[tierKey] ?? '');
+      await updateTier(token, tierKey, draft);
       setSaveState((prev) => ({ ...prev, [tierKey]: 'saved' }));
     } catch {
       setSaveState((prev) => ({ ...prev, [tierKey]: 'idle' }));
@@ -42,22 +71,25 @@ export default function ProfilesScreen({ onChangeTab }: ProfilesScreenProps) {
   if (error) {
     return (
       <PhoneScreen>
+        <TopNav active="profiles" onChange={onChangeTab} />
         <div className="flex-1 flex items-center justify-center text-center px-4">
           <p className="text-ink text-[14px]">Не удалось загрузить уровни результата.</p>
         </div>
-        <BottomNav active="profiles" onChange={onChangeTab} />
       </PhoneScreen>
     );
   }
 
   return (
     <PhoneScreen>
+      <TopNav active="profiles" onChange={onChangeTab} />
       <div className="flex-1 overflow-y-auto -mx-5 px-5 space-y-4">
         {tiers.map((tier) => {
           const state = saveState[tier.key] ?? 'idle';
+          const draft = drafts[tier.key];
+          if (!draft) return null;
           return (
             <div key={tier.key} className="bg-white rounded-[5px] p-4">
-              <div className="flex items-start justify-between gap-3 mb-2">
+              <div className="flex items-start justify-between gap-3 mb-3">
                 <p className="font-bold text-ink text-[16px] capitalize">{tier.level}</p>
                 <div className="text-right shrink-0">
                   <p className="text-[10px] text-muted">индекс</p>
@@ -66,15 +98,51 @@ export default function ProfilesScreen({ onChangeTab }: ProfilesScreenProps) {
                   </p>
                 </div>
               </div>
+
+              {/* Эти три поля — то, что реально увидит игрок на экране
+                  результата. Заголовок необязателен (может остаться
+                  пустым, как сейчас у "новичка"). */}
+              <label className="block text-[10px] text-muted mb-1">
+                заголовок (необязательно)
+              </label>
+              <input
+                value={draft.title}
+                onChange={(e) => updateDraft(tier.key, { title: e.target.value })}
+                placeholder="например, «Отличный результат!»"
+                className={`w-full text-[13px] text-ink px-3 py-2 mb-2 ${FIELD}`}
+              />
+
+              <label className="block text-[10px] text-muted mb-1">текст</label>
               <textarea
-                value={descriptions[tier.key] ?? ''}
-                onChange={(e) => {
-                  setDescriptions((prev) => ({ ...prev, [tier.key]: e.target.value }));
-                  setSaveState((prev) => ({ ...prev, [tier.key]: 'idle' }));
-                }}
+                value={draft.body}
+                onChange={(e) => updateDraft(tier.key, { body: e.target.value })}
                 rows={4}
                 className={`w-full text-[13px] text-ink leading-snug resize-none px-3 py-2 mb-2 ${FIELD}`}
               />
+
+              <label className="block text-[10px] text-muted mb-1">
+                призыв (приглашение на выставку)
+              </label>
+              <textarea
+                value={draft.cta}
+                onChange={(e) => updateDraft(tier.key, { cta: e.target.value })}
+                rows={2}
+                className={`w-full text-[13px] text-ink leading-snug resize-none px-3 py-2 mb-3 ${FIELD}`}
+              />
+
+              {/* А это поле игрок не видит никогда — это заметка внутри
+                  команды, например "надо смягчить формулировку" или
+                  "проверить с кибербезом". */}
+              <label className="block text-[10px] text-muted mb-1">
+                заметка для команды (игрок её не видит)
+              </label>
+              <textarea
+                value={draft.adminDescription}
+                onChange={(e) => updateDraft(tier.key, { adminDescription: e.target.value })}
+                rows={2}
+                className={`w-full text-[13px] text-ink leading-snug resize-none px-3 py-2 mb-2 ${FIELD}`}
+              />
+
               <button
                 type="button"
                 onClick={() => handleSave(tier.key)}
@@ -87,8 +155,6 @@ export default function ProfilesScreen({ onChangeTab }: ProfilesScreenProps) {
           );
         })}
       </div>
-
-      <BottomNav active="profiles" onChange={onChangeTab} />
     </PhoneScreen>
   );
 }

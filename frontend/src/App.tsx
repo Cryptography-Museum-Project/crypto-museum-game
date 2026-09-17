@@ -6,10 +6,24 @@ import ResultScreen from './screens/ResultScreen';
 import MemoScreen from './screens/MemoScreen';
 import PhoneScreen from './components/PhoneScreen';
 import { fetchScenarios, startSession, submitAnswer, finishSession } from './api/game';
-import type { PlayableScenario } from './api/game';
+import type { PlayableScenario, FinishResponse } from './api/game';
 
-type Stage = 'landing' | 'scenario' | 'answer' | 'result' | 'memo';
+type Stage = 'landing' | 'scenario' | 'answer' | 'finishing' | 'result' | 'memo';
 type LoadState = 'loading' | 'ready' | 'error';
+
+// Показывается только если POST /finish не смог ответить (нет сети,
+// backend прилёг именно в этот момент) — обычный посетитель этого
+// никогда не увидит. Без него игра осталась бы на экране "завершаем…"
+// навсегда. Уровень и проценты в этом случае — только приблизительные
+// (посчитаны из уже отправленных на backend баллов на клиенте), а не
+// то, что реально сохранилось на сервере.
+const FALLBACK_TIER: FinishResponse['tier'] = {
+  key: 'unknown',
+  level: 'участник',
+  title: '',
+  body: 'Спасибо, что прошли игру! Не удалось связаться с сервером, чтобы показать полный разбор результата — но чек-лист по цифровой безопасности всё равно доступен ниже.',
+  cta: 'Хотите разобраться подробнее? Ждём вас на выставке «Ключ к доверию» в Музее криптографии.',
+};
 
 function App() {
   // Сценарии и id игровой сессии приходят с backend при загрузке страницы.
@@ -21,6 +35,7 @@ function App() {
   const [index, setIndex] = useState(0);
   const [scores, setScores] = useState<number[]>([]);
   const [lastOptionId, setLastOptionId] = useState<string | null>(null);
+  const [finishResult, setFinishResult] = useState<FinishResponse | null>(null);
 
   const loadGame = () => {
     setLoadState('loading');
@@ -45,6 +60,7 @@ function App() {
     setIndex(0);
     setScores([]);
     setLastOptionId(null);
+    setFinishResult(null);
     // Каждое прохождение — это новая сессия на backend, поэтому при
     // возврате на старт начинаем сессию заново.
     loadGame();
@@ -61,7 +77,17 @@ function App() {
     setStage('answer');
   };
 
-  const handleContinue = () => {
+  const buildFallbackResult = (finalScores: number[]): FinishResponse => {
+    const approximateScore = finalScores.reduce((sum, points) => sum + points, 0);
+    return {
+      id: sessionId ?? '',
+      totalScore: approximateScore,
+      maxScore: 100,
+      tier: FALLBACK_TIER,
+    };
+  };
+
+  const handleContinue = async () => {
     const scenario = scenarios[index];
     const chosen = scenario.options.find((option) => option.id === lastOptionId);
     const nextScores = [...scores, chosen?.points ?? 0];
@@ -79,14 +105,31 @@ function App() {
     if (index + 1 < scenarios.length) {
       setIndex(index + 1);
       setStage('scenario');
-    } else {
-      if (sessionId) {
-        finishSession(sessionId).catch((error) => {
-          console.error('Не удалось завершить сессию на backend:', error);
-        });
-      }
-      setStage('result');
+      return;
     }
+
+    // Последний сценарий пройден — а вот здесь, в отличие от ответа на
+    // сценарий, ответ backend нам действительно нужен: только там
+    // считается настоящий итоговый балл и лежит текст уровня, который
+    // куратор может редактировать в админке ("Профили"). Показывать
+    // результат, не дожидаясь этого ответа, значит показывать текст,
+    // зашитый в сборку фронтенда, а не тот, что реально сохранён на
+    // сервере — поэтому здесь мы ждём, пусть игра на секунду и покажет
+    // экран "подводим итоги" вместо мгновенного перехода.
+    setStage('finishing');
+    if (!sessionId) {
+      setFinishResult(buildFallbackResult(nextScores));
+      setStage('result');
+      return;
+    }
+    try {
+      const result = await finishSession(sessionId);
+      setFinishResult(result);
+    } catch (error) {
+      console.error('Не удалось завершить сессию на backend:', error);
+      setFinishResult(buildFallbackResult(nextScores));
+    }
+    setStage('result');
   };
 
   if (loadState === 'loading') {
@@ -127,6 +170,7 @@ function App() {
     return (
       <ScenarioScreen
         scenario={scenarios[index]}
+        total={scenarios.length}
         onSelectOption={handleSelectOption}
         onHome={resetToLanding}
       />
@@ -152,14 +196,30 @@ function App() {
     );
   }
 
+  if (stage === 'finishing') {
+    return (
+      <PhoneScreen>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-ink text-[14px]">Подводим итоги…</p>
+        </div>
+      </PhoneScreen>
+    );
+  }
+
   if (stage === 'memo') {
     return <MemoScreen onHome={resetToLanding} onBack={() => setStage('result')} />;
   }
 
-  const total = scores.reduce((sum, points) => sum + points, 0);
+  // finishResult к этому моменту почти всегда уже установлен (см.
+  // handleContinue — стадия 'result' выставляется только после того, как
+  // setFinishResult отработал, в том числе в ветке с ошибкой). Проверка
+  // ниже — просто подстраховка для TypeScript и на случай непредвиденного
+  // порядка обновлений состояния, не рабочий сценарий сам по себе.
+  const result = finishResult ?? buildFallbackResult(scores);
   return (
     <ResultScreen
-      score={total}
+      score={result.totalScore}
+      tier={result.tier}
       onHome={resetToLanding}
       onReplay={resetToLanding}
       onOpenMemo={() => setStage('memo')}

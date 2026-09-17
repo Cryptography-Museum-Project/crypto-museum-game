@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import PhoneScreen from '../../components/PhoneScreen';
-import BottomNav, { type AdminTab } from '../components/BottomNav';
+import TopNav, { type AdminTab } from '../components/TopNav';
 import { getStoredToken, fetchScenarioStats, type ScenarioStat } from '../api';
 
 interface AnswerStatsScreenProps {
@@ -12,7 +12,7 @@ interface AnswerStatsScreenProps {
 // сценариям. Открывается кликом по строке в "ошибки по сценариям" на
 // Обзоре — список остаётся в исходном порядке (01-10), но экран сразу
 // прокручивается к тому сценарию, по которому кликнули, и подсвечивает его.
-// Навигация — тот же нижний таббар, что на Обзоре и Профилях, без отдельной
+// Навигация — та же верхняя панель, что на Обзоре и Профилях, без отдельной
 // ссылки "Обзор" наверху.
 export default function AnswerStatsScreen({
   focusScenarioId,
@@ -38,16 +38,17 @@ export default function AnswerStatsScreen({
   if (error) {
     return (
       <PhoneScreen>
+        <TopNav active="scenarios" onChange={onChangeTab} />
         <div className="flex-1 flex items-center justify-center text-center px-4">
           <p className="text-ink text-[14px]">Не удалось загрузить статистику по сценариям.</p>
         </div>
-        <BottomNav active="scenarios" onChange={onChangeTab} />
       </PhoneScreen>
     );
   }
 
   return (
     <PhoneScreen>
+      <TopNav active="scenarios" onChange={onChangeTab} />
       <div className="flex-1 overflow-y-auto -mx-5 px-5 space-y-4">
         {scenarioStats.map((scenario) => (
           <div
@@ -88,8 +89,6 @@ export default function AnswerStatsScreen({
           </div>
         ))}
       </div>
-
-      <BottomNav active="scenarios" onChange={onChangeTab} />
     </PhoneScreen>
   );
 }

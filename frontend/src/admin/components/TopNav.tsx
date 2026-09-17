@@ -3,7 +3,7 @@ import { clearStoredToken } from '../api';
 
 export type AdminTab = 'overview' | 'scenarios' | 'profiles';
 
-interface BottomNavProps {
+interface TopNavProps {
   active: AdminTab;
   onChange: (tab: AdminTab) => void;
 }
@@ -56,7 +56,7 @@ function PeopleIcon() {
 
 function LogoutIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
       <path
         d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
         stroke="currentColor"
@@ -93,31 +93,36 @@ function handleLogout() {
   window.location.reload();
 }
 
-export default function BottomNav({ active, onChange }: BottomNavProps) {
+// Навигация закреплена вверху экрана (а не внизу, как было раньше) —
+// по фидбеку куратора внизу таббар было неудобно доставать пальцем и
+// его было легко перепутать с системной панелью браузера.
+export default function TopNav({ active, onChange }: TopNavProps) {
   return (
-    <div className="flex items-stretch justify-around border-t border-line pt-3 -mx-5 px-5 mt-4">
-      {TABS.map(({ key, label, Icon }) => {
-        const isActive = active === key;
-        return (
-          <button
-            key={key}
-            type="button"
-            onClick={() => onChange(key)}
-            aria-current={isActive ? 'page' : undefined}
-            className={`flex flex-col items-center gap-1 px-3 pt-1 pb-1 rounded-[5px] transition-colors active:bg-ink/5 ${FOCUS_RING} ${
-              isActive ? 'text-brand' : 'text-muted hover:text-ink'
-            }`}
-          >
-            <Icon />
-            <span className={`text-[11px] ${isActive ? 'font-semibold' : ''}`}>{label}</span>
-          </button>
-        );
-      })}
+    <div className="flex items-stretch justify-between gap-1 border-b border-line pb-3 -mx-5 px-5 mb-4">
+      <div className="flex items-stretch gap-1">
+        {TABS.map(({ key, label, Icon }) => {
+          const isActive = active === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => onChange(key)}
+              aria-current={isActive ? 'page' : undefined}
+              className={`flex flex-col items-center gap-1 px-3 pt-1 pb-1 rounded-[5px] transition-colors active:bg-ink/5 ${FOCUS_RING} ${
+                isActive ? 'text-brand' : 'text-muted hover:text-ink'
+              }`}
+            >
+              <Icon />
+              <span className={`text-[11px] ${isActive ? 'font-semibold' : ''}`}>{label}</span>
+            </button>
+          );
+        })}
+      </div>
 
       <button
         type="button"
         onClick={handleLogout}
-        className={`flex flex-col items-center gap-1 px-3 pt-1 pb-1 rounded-[5px] transition-colors active:bg-ink/5 text-muted hover:text-ink ${FOCUS_RING}`}
+        className={`flex flex-col items-center gap-1 px-3 pt-1 pb-1 rounded-[5px] transition-colors active:bg-ink/5 text-muted hover:text-ink shrink-0 ${FOCUS_RING}`}
       >
         <LogoutIcon />
         <span className="text-[11px]">выход</span>

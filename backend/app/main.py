@@ -8,13 +8,15 @@
 Документация API (Swagger) появится сама на:  http://localhost:8000/docs
 """
 
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.database import Base, SessionLocal, engine
+from app.database import Base, SessionLocal, engine, run_light_migrations
 from app.routers import admin_auth, admin_content, admin_stats, scenarios, sessions
 from app.seed_data import seed_all
 
@@ -23,12 +25,17 @@ from app.seed_data import seed_all
 async def lifespan(app: FastAPI):
     # 1. Создать таблицы, если их ещё нет (на самом первом запуске)
     Base.metadata.create_all(bind=engine)
+    # 1.1. Подтянуть колонки, которых не было в более старых базах
+    # (сейчас это только image_url у сценариев — см. database.py)
+    run_light_migrations()
     # 2. Заполнить базу стартовыми сценариями/уровнями/админом, если она пустая
     db = SessionLocal()
     try:
         seed_all(db)
     finally:
         db.close()
+    # 3. Папка для загруженных из админки файлов (сейчас — фото сценариев)
+    os.makedirs(os.path.join(settings.upload_dir, "scenarios"), exist_ok=True)
     yield
 
 
@@ -54,6 +61,13 @@ app.include_router(sessions.router)
 app.include_router(admin_auth.router)
 app.include_router(admin_content.router)
 app.include_router(admin_stats.router)
+
+# Раздаём загруженные из админки файлы (фото сценариев) напрямую как
+# статику — то есть по ссылке вида /uploads/scenarios/xxx.png. os.makedirs
+# в lifespan выше гарантирует, что папка существует ещё до того, как
+# StaticFiles попробует её открыть.
+os.makedirs(settings.upload_dir, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=settings.upload_dir), name="uploads")
 
 
 @app.get("/health", tags=["system"])

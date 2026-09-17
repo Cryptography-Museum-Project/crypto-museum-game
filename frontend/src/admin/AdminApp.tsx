@@ -5,7 +5,7 @@ import AnswerStatsScreen from './screens/AnswerStatsScreen';
 import ScenariosListScreen from './screens/ScenariosListScreen';
 import ScenarioEditScreen from './screens/ScenarioEditScreen';
 import ProfilesScreen from './screens/ProfilesScreen';
-import type { AdminTab } from './components/BottomNav';
+import type { AdminTab } from './components/TopNav';
 import { clearStoredToken, getStoredToken, whoAmI } from './api';
 
 type Stage =

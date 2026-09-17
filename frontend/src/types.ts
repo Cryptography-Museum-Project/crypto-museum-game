@@ -31,6 +31,11 @@ export interface Scenario {
   category: Category;
   description: string; // текст ситуации под заголовком
   visual: VisualType; // какой компонент-визуал рендерить
+  // Кастомное фото, загруженное куратором через админку. Если задано —
+  // игра показывает именно его вместо встроенной иллюстрации из visual
+  // (см. ScenarioScreen.tsx). Путь относительный (отдаёт backend), поэтому
+  // при отрисовке его нужно склеить с API_BASE_URL.
+  imageUrl?: string | null;
   optionsHeading?: string; // заголовок над списком вариантов
   options: ScenarioOption[];
 }
