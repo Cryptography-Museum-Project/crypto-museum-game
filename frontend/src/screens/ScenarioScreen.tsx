@@ -20,11 +20,6 @@ import purchasePhone from '../assets/scenario-visuals/purchase-phone.png';
 
 interface ScenarioScreenProps {
   scenario: Scenario;
-  // Общее число сценариев в текущей игре — приходит из App.tsx (длина
-  // списка, полученного от backend), а не захардкожено здесь. Раньше это
-  // было отдельной константой TOTAL_SCENARIOS в data/scenarios.ts — она
-  // всегда равнялась 10 и просто дублировала то, что и так известно из
-  // уже загруженных с backend сценариев.
   total: number;
   onSelectOption?: (optionId: string) => void;
   onHome?: () => void;
@@ -32,10 +27,7 @@ interface ScenarioScreenProps {
 
 function renderVisual(scenario: Scenario) {
   // Кастомное фото из админки — если куратор его загрузил, оно должно
-  // перекрывать встроенную иллюстрацию, а не просто быть на неё похожим.
-  // imageUrl приходит с backend относительным ("/uploads/..."), backend
-  // и frontend живут на разных адресах (localhost:8000 / localhost:5173),
-  // поэтому путь нужно склеить с базовым адресом API.
+  // перекрывать встроенную иллюстрацию
   if (scenario.imageUrl) {
     return <ScenarioVisualImage src={`${API_BASE_URL}${scenario.imageUrl}`} alt={scenario.code} />;
   }
