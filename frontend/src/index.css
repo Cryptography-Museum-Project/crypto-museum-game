@@ -40,11 +40,6 @@
   --color-dark: #00001a;
   --font-halvar: 'Halvar Breitschrift', system-ui, sans-serif;
 
-  /*
-   * Брейкпоинт переключения PhoneScreen с мобильной (одна колонка на всю
-   * ширину) на десктопную (трёхколоночную, с плавно сужающимися боковыми
-   * колонками) вёрстку. 
-   */
   --breakpoint-tablet: 71.875rem; /* 1150px */
 }
 
@@ -60,12 +55,6 @@ button {
   appearance: none;
 }
 
-/* Буквы заголовка "Маршрут цифрового дня" на стартовом экране появляются
-   по одной, с небольшой задержкой между ними (см. LandingScreen.tsx —
-   там же выставляется animation-delay для каждой буквы через inline
-   style). Лёгкое смещение вверх + рост прозрачности — тот же общий
-   характер движения, что и в макете (Figma-прототип), без лишней
-   "театральности". */
 @keyframes letter-reveal {
   from {
     opacity: 0;
@@ -83,8 +72,6 @@ button {
   animation: letter-reveal 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-/* Кому анимация мешает (укачивание, вестибулярные нарушения) — тексту
-   уже нечего терять: показываем сразу целиком, без движения. */
 @media (prefers-reduced-motion: reduce) {
   .letter-reveal {
     animation: none;

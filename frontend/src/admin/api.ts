@@ -161,10 +161,6 @@ export function updateScenario(
   });
 }
 
-// Загрузка/удаление фото сценария — отдельные эндпоинты (multipart для
-// файла), поэтому не через apiRequest (он всегда шлёт JSON) и не через
-// updateScenario (та полностью перезаписывает сценарий и варианты ответов
-// разом и ничего не знает про файлы).
 export async function uploadScenarioImage(
   token: string,
   scenarioId: number,
@@ -176,8 +172,6 @@ export async function uploadScenarioImage(
   const response = await fetch(`${API_BASE_URL}/api/admin/scenarios/${scenarioId}/image`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
-    // Content-Type для multipart/form-data (с нужным boundary) браузер
-    // выставляет сам, если задать его руками — запрос сломается.
     body: formData,
   });
 

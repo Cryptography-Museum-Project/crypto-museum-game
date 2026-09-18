@@ -10,12 +10,6 @@ interface ProfilesScreenProps {
 
 type SaveState = 'idle' | 'saving' | 'saved';
 
-// То, что реально видит игрок на экране результата (ResultScreen):
-// title — необязательный короткий заголовок (у "новичка" в сидовых
-// данных он вообще пустой), body — основной текст разбора результата,
-// cta — приглашение на выставку. adminDescription — единственное поле
-// НЕ показывается игроку нигде; это заметка для команды/куратора при
-// просмотре этого же списка (например, план "что доработать в тексте").
 interface TierDraft {
   title: string;
   body: string;
@@ -99,9 +93,7 @@ export default function ProfilesScreen({ onChangeTab }: ProfilesScreenProps) {
                 </div>
               </div>
 
-              {/* Эти три поля — то, что реально увидит игрок на экране
-                  результата. Заголовок необязателен (может остаться
-                  пустым, как сейчас у "новичка"). */}
+              {/* то, что реально увидит игрок на экране результата */}
               <label className="block text-[10px] text-muted mb-1">
                 заголовок (необязательно)
               </label>
@@ -130,9 +122,7 @@ export default function ProfilesScreen({ onChangeTab }: ProfilesScreenProps) {
                 className={`w-full text-[13px] text-ink leading-snug resize-none px-3 py-2 mb-3 ${FIELD}`}
               />
 
-              {/* А это поле игрок не видит никогда — это заметка внутри
-                  команды, например "надо смягчить формулировку" или
-                  "проверить с кибербезом". */}
+              {/* заметка */}
               <label className="block text-[10px] text-muted mb-1">
                 заметка для команды (игрок её не видит)
               </label>

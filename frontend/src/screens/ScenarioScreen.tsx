@@ -26,8 +26,6 @@ interface ScenarioScreenProps {
 }
 
 function renderVisual(scenario: Scenario) {
-  // Кастомное фото из админки — если куратор его загрузил, оно должно
-  // перекрывать встроенную иллюстрацию
   if (scenario.imageUrl) {
     return <ScenarioVisualImage src={`${API_BASE_URL}${scenario.imageUrl}`} alt={scenario.code} />;
   }
@@ -50,7 +48,7 @@ function renderVisual(scenario: Scenario) {
       return (
         <ScenarioVisualImage
           src={bankCallCode}
-          alt="Входящий звонок с кодом подтверждения из SMS"
+          alt="Входящий звонок с кодом подтверждения из СМС"
         />
       );
     case 'email':
