@@ -166,7 +166,7 @@ export default function ResultScreen({ score, tier, onHome, onReplay, onOpenMemo
             {score}
           </span>
           <span className="text-brand text-[13px] font-semibold mt-1">твой индекс</span>
-          <span className="text-ink text-[13px] mt-1">
+          <span className="text-ink text-[17px] mt-1">
             уровень: <span className="font-bold">{tier.level}</span>
           </span>
         </div>
