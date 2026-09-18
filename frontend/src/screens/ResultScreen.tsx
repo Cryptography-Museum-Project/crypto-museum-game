@@ -9,12 +9,6 @@ import { TICKET_URL, EXHIBITION_URL } from '../constants';
 import type { FinishResponse } from '../api/game';
 import { PRIMARY_BUTTON, ICON_BUTTON, TEXT_LINK, FOCUS_RING } from '../styles/interactive';
 
-// Тот же формат уровня, что возвращает POST /api/sessions/{id}/finish —
-// см. FinishResponse в api/game.ts. ResultScreen больше не считает
-// уровень и его тексты сам (раньше — через getTier() из локального
-// data/tiers.ts): и score, и tier должны приходить с backend, иначе
-// правки уровней в админ-панели ("Профили") никогда не долетят до
-// реальной игры.
 type ResultTier = FinishResponse['tier'];
 
 interface ResultScreenProps {
@@ -28,10 +22,6 @@ interface ResultScreenProps {
 const PROMO_CODE = '59FG-SDFG-DGK9';
 const MAX_INDEX = 100;
 
-// Иконка "поделиться" — три узла, соединённые линиями (привычный
-// паттерн иконки шаринга). Рисуем инлайн через currentColor, как
-// остальные иконки без подписи в проекте (см. admin/TopNav),
-// чтобы цвет можно было менять через text-* классы, не трогая сам SVG.
 function ShareIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -48,9 +38,6 @@ function ShareIcon() {
   );
 }
 
-// Текст, который уходит при "поделиться" — и в Web Share API, и в
-// буфер обмена как запасной вариант. Без промокода: его и так видно
-// на экране отдельной строкой, а в шаринге он выглядел бы как реклама.
 function buildShareText(score: number, tierLevel: string): string {
   return (
     `Мой индекс цифровой безопасности: ${score}/${MAX_INDEX} (уровень: ${tierLevel}). ` +
@@ -59,8 +46,6 @@ function buildShareText(score: number, tierLevel: string): string {
   );
 }
 
-// Делает слово "памятку/памятка/Памятка" внутри текста кликабельной ссылкой
-// на экран MemoScreen, не трогая остальной текст.
 function renderWithMemoLink(text: string, onOpenMemo?: () => void) {
   const match = text.match(/памятк[а-я]*/i);
   if (!match) return text;
@@ -81,15 +66,6 @@ function renderWithMemoLink(text: string, onOpenMemo?: () => void) {
   );
 }
 
-// Здесь, в отличие от TopBar на других экранах, шкала не сегментирована —
-// это одна сплошная полоса, залитая на % от итогового балла (0-100),
-// а не отсчёт "сценарий N из 10".
-//
-// Кнопка "поделиться" стоит рядом со счётом, а не рядом с домиком —
-// домик скрыт на десктопе (xl:hidden), а поделиться результатом должно
-// быть доступно на любом экране. Группируем счёт и кнопку вместе, тогда
-// на десктопе (где виден только этот блок, т.к. justify-end) они всё
-// равно остаются прижаты друг к другу и выровнены по правому краю.
 function ScoreBar({
   score,
   onHome,
@@ -154,12 +130,7 @@ export default function ResultScreen({ score, tier, onHome, onReplay, onOpenMemo
     }
   };
 
-  // Предпочитаем нативный Web Share API — на телефоне (а посетители
-  // выставки играют именно с телефона, отсканировав QR-код) он открывает
-  // системное меню "поделиться" с мессенджерами, которые уже установлены.
-  // Если API недоступен (десктопные браузеры без поддержки, старые
-  // версии) — просто копируем текст результата в буфер обмена и
-  // показываем то же подтверждение, что и для промокода.
+
   const handleShare = async () => {
     const shareText = buildShareText(score, tier.level);
     if (navigator.share) {

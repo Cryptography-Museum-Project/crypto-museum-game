@@ -20,8 +20,6 @@ type Stage =
 export default function AdminApp() {
   const [stage, setStage] = useState<Stage>({ name: 'checking-session' });
 
-  // Если в браузере уже сохранён токен (вошли раньше) — проверяем, что он
-  // ещё действует, и сразу открываем админку, не заставляя логиниться снова.
   useEffect(() => {
     const token = getStoredToken();
     if (!token) {

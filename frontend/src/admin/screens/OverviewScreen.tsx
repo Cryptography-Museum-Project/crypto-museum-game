@@ -22,8 +22,6 @@ interface OverviewScreenProps {
   onOpenScenarioStats: (scenarioId: number) => void;
 }
 
-// Цвета уровней — это оформление конкретно этого графика, поэтому держим
-// их на фронтенде, а не в базе (backend отдаёт только key/label/percent).
 const TIER_COLORS: Record<string, string> = {
   novice: '#EF4444',
   connoisseur: '#10B981',
@@ -111,10 +109,6 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
   const [profiles, setProfiles] = useState<ProfileDistributionItem[]>([]);
   const [error, setError] = useState(false);
 
-  // Обзорные цифры зависят от выбранного периода — перезапрашиваем их
-  // при каждой смене периода. requestIdRef защищает от гонки: если
-  // пользователь быстро переключает периоды, ответ на устаревший запрос
-  // может прийти позже нового и перезаписать актуальные данные.
   const requestIdRef = useRef(0);
   useEffect(() => {
     if (!token) return;
@@ -126,8 +120,6 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
       .catch(() => setError(true));
   }, [token, period]);
 
-  // Остальное (сценарии, частые ошибки, профили) от периода не зависит —
-  // запрашиваем один раз при открытии экрана.
   useEffect(() => {
     if (!token) return;
     Promise.all([fetchScenarioStats(token), fetchMistakes(token, 3), fetchProfileDistribution(token)])
@@ -217,13 +209,7 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
                 <span className="text-[11px] text-muted w-7 shrink-0 tabular-nums">
                   {scenario.errorRate}%
                 </span>
-                {/* Номер сценария и его код — сразу после процента, оба
-                    с фиксированной шириной, поэтому номер всегда начинается
-                    на одном уровне независимо от длины названия сценария.
-                    Раньше это было после полосы (flex-1), из-за чего полоса
-                    "съедала" разное количество места и номер каждый раз
-                    сдвигался. Короткие (однозначные) номера дополняются
-                    пробелом слева до ширины двузначных. */}
+                {/* Номер сценария и его код — сразу после процента */}
                 <span className="text-[12px] text-ink shrink-0 flex items-baseline gap-1">
                   <span className="tabular-nums text-right inline-block w-[1.1em]">
                     {String(scenario.scenarioId).padStart(2, '\u00A0')}
@@ -261,14 +247,7 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
           {mistakes.length === 0 && <p className="text-[12px] text-muted">Пока нет данных.</p>}
           {mistakes.map((mistake) => (
             <div key={`${mistake.scenarioId}-${mistake.optionLabel}`} className="flex gap-4 mb-3 last:mb-0">
-              {/* Фиксированная ширина у процента — иначе текст справа
-                  сдвигается в зависимости от того, сколько у процента
-                  цифр (5% короче, чем 42.5%), и колонка "гуляет".
-                  Ширина увеличена (с запасом под "100%" — три полные
-                  цифры без точки шире, чем "66.7%" в этом же шрифте) и
-                  добавлен nowrap, чтобы число не переносилось и не
-                  наезжало на текст справа. gap-4 вместо gap-3 — заметный
-                  отступ между процентом и текстом, как попросили. */}
+              {/* Фиксированная ширина у процента */}
               <span className="font-halvar font-bold text-brand text-[26px] shrink-0 w-24 tabular-nums whitespace-nowrap">
                 {mistake.pickedPercent}%
               </span>

@@ -51,9 +51,6 @@ function CloseIcon() {
   );
 }
 
-// Ограничения дублируют то, что проверяет backend (см.
-// admin_content.py) — здесь нужны только для того, чтобы сказать
-// об ошибке сразу, не дожидаясь ответа сервера.
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 
@@ -221,10 +218,6 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
           />
 
           {imageUrl ? (
-            // Есть загруженное фото — превью вместо кнопки "фото +".
-            // Клик по самой картинке позволяет заменить её; отдельный
-            // крестик сверху — убрать (сценарий вернётся к встроенной
-            // иллюстрации).
             <div className="shrink-0 relative w-[46px] h-[46px]">
               <button
                 type="button"

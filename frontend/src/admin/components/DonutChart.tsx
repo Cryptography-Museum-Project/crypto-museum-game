@@ -8,8 +8,6 @@ interface DonutChartProps {
   size?: number;
 }
 
-// Простая "бублик"-диаграмма без сторонних библиотек — сегменты рисуются
-// через stroke-dasharray на окружности.
 export default function DonutChart({ segments, size = 96 }: DonutChartProps) {
   const strokeWidth = 16;
   const radius = (size - strokeWidth) / 2;

@@ -36,12 +36,6 @@ export interface FinishResponse {
 }
 
 // --- То, чем реально пользуется остальной фронтенд -------------------------
-//
-// PlayableOption/PlayableScenario — это Scenario/ScenarioOption из types.ts
-// (тот же формат, что раньше жил в data/scenarios.ts) плюс один скрытый
-// технический id варианта в базе данных (dbOptionId), который нужен только
-// чтобы отправить ответ на backend. Экраны игры (ScenarioScreen, AnswerScreen
-// и т.д.) ничего не знают про dbOptionId и продолжают работать как раньше.
 
 export interface PlayableOption extends ScenarioOption {
   dbOptionId: number;

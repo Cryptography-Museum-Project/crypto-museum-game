@@ -1,6 +1,3 @@
-// Базовый адрес backend. Можно переопределить при сборке через переменную
-// окружения VITE_API_URL (файл .env, см. .env.example) — например, если
-// backend развёрнут на отдельном домене/сервере, а не на localhost.
 export const API_BASE_URL: string =
   (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ??
   'http://localhost:8000';
@@ -21,11 +18,6 @@ interface RequestOptions {
   token?: string | null;
 }
 
-/**
- * Общая обёртка над fetch: подставляет базовый адрес, сериализует JSON,
- * добавляет заголовок авторизации (если передан токен) и превращает
- * "плохие" HTTP-ответы в понятную ошибку с текстом от backend.
- */
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, token } = options;
 

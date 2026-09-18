@@ -81,21 +81,12 @@ const TABS: { key: AdminTab; label: string; Icon: typeof EyeIcon }[] = [
   { key: 'profiles', label: 'профили', Icon: PeopleIcon },
 ];
 
-// Выход из админки доступен прямо здесь, а не отдельным экраном — эта
-// панель и так отрисована на каждой странице админки, значит кнопка
-// доступна откуда угодно. После очистки токена просто перезагружаем
-// страницу: AdminApp при загрузке сам проверяет токен и, не найдя его,
-// покажет экран входа — отдельно прокидывать колбэк через все экраны
-// не требуется.
 function handleLogout() {
   if (!window.confirm('Выйти из админ-панели?')) return;
   clearStoredToken();
   window.location.reload();
 }
 
-// Навигация закреплена вверху экрана (а не внизу, как было раньше) —
-// по фидбеку куратора внизу таббар было неудобно доставать пальцем и
-// его было легко перепутать с системной панелью браузера.
 export default function TopNav({ active, onChange }: TopNavProps) {
   return (
     <div className="flex items-stretch justify-between gap-1 border-b border-line pb-3 -mx-5 px-5 mb-4">

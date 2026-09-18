@@ -4,9 +4,6 @@ interface GameMastheadProps {
   onHome?: () => void;
 }
 
-// Показывается только на десктопе (xl и выше) — на мобильном эта роль
-// уже выполняется иконкой "домой" в TopBar, повторять незачем.
-// Клик по заголовку — это и есть десктопный аналог иконки "домой".
 export default function GameMasthead({ onHome }: GameMastheadProps) {
   return (
     <button

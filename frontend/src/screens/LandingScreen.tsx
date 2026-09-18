@@ -11,21 +11,8 @@ interface LandingScreenProps {
   onStart?: () => void;
 }
 
-// Задержка между появлением соседних букв — подобрано так, чтобы всё
-// название ("Маршрут" + "цифрового дня", 20 букв без пробелов и переноса
-// строки) успевало появиться примерно за секунду: не настолько быстро,
-// что эффект теряется, и не настолько медленно, что раздражает при
-// повторном заходе на стартовый экран.
 const LETTER_STEP_SECONDS = 0.045;
 
-// Разбивает строку на буквы-<span>, каждая — со своей задержкой анимации
-// (см. .letter-reveal в index.css). startIndex нужен, чтобы вторая строка
-// заголовка продолжала общий отсчёт задержки, а не начинала анимацию
-// заново с нуля — иначе перенос строки выглядел бы как две отдельные
-// надписи, а не одно слово, "проявляющееся" целиком.
-// Пробелы рендерятся как неразрывные (\u00A0): это короткий, специально
-// перенесённый вручную заголовок, а не свободный текст, — переноса
-// посреди слов быть не должно ни при каких условиях.
 function renderAnimatedLetters(text: string, startIndex: number) {
   return text.split('').map((char, i) => (
     <span
@@ -38,10 +25,6 @@ function renderAnimatedLetters(text: string, startIndex: number) {
   ));
 }
 
-// Заголовок собирается из букв-спанов (для анимации появления), но для
-// скринридеров и поиска на странице должен остаться обычным читаемым
-// текстом — поэтому сам текст задаётся через aria-label на обёртке,
-// а буквы внутри скрыты из accessibility-дерева (aria-hidden).
 function AnimatedTitle({ lines }: { lines: string[] }) {
   let cursor = 0;
   return (
@@ -86,13 +69,20 @@ export default function LandingScreen({ onStart }: LandingScreenProps) {
         className="hidden xl:block pointer-events-none select-none absolute top-0 left-0 w-full h-auto opacity-70"
       />
       {/* Картинка-фигура — начинается на уровне заголовка "МАРШРУТ" (не после
-          кнопки!), сидит справа от текста и тянется вниз почти до низа экрана */}
-      <img
-        src={desktopFigure}
-        alt=""
+          кнопки!), сидит справа от текста и тянется вниз почти до низа экрана.
+          Высота бокса задаётся через top+bottom (а не фиксированной высотой),
+          поэтому картинка всегда умещается по высоте экрана на любом дисплее
+          без скролла и без обрезания — она просто пропорционально ужимается. */}
+      <div
         aria-hidden="true"
-        className="hidden xl:block pointer-events-none select-none absolute right-0 top-[390px] w-125 max-w-none"
-      />
+        className="hidden xl:block pointer-events-none select-none absolute right-0 top-[390px] bottom-10 w-125"
+      >
+        <img
+          src={desktopFigure}
+          alt=""
+          className="h-full w-full object-contain object-right-bottom"
+        />
+      </div>
 
       <div className="relative flex flex-col h-full xl:h-full">
         <h2 className="font-halvar font-light text-brand text-[20px] xl:text-[32px] uppercase underline decoration-2 underline-offset-4">
