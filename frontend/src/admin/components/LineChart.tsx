@@ -9,15 +9,17 @@ export default function LineChart({ points, labels, maxValue }: LineChartProps) 
   const height = 120;
   const paddingLeft = 28;
   const paddingBottom = 18;
+  const paddingTop = 10;
   const max = maxValue ?? Math.max(...points) * 1.2;
 
   const plotWidth = width - paddingLeft;
-  const plotHeight = height - paddingBottom;
+  const plotHeight = height - paddingBottom - paddingTop;
+
+  const yFor = (value: number) => paddingTop + plotHeight - (value / max) * plotHeight;
 
   const coords = points.map((value, index) => {
     const x = paddingLeft + (index / (points.length - 1)) * plotWidth;
-    const y = plotHeight - (value / max) * plotHeight;
-    return `${x},${y}`;
+    return `${x},${yFor(value)}`;
   });
 
   const gridValues = Array.from(new Set([0, Math.round(max / 2), Math.round(max)]));
@@ -31,7 +33,7 @@ export default function LineChart({ points, labels, maxValue }: LineChartProps) 
   return (
     <svg viewBox={`0 0 ${width} ${height + 14}`} className="w-full">
       {gridValues.map((value) => {
-        const y = plotHeight - (value / max) * plotHeight;
+        const y = yFor(value);
         return (
           <g key={value}>
             <line x1={paddingLeft} x2={width} y1={y} y2={y} stroke="#E4E4EA" strokeWidth="1" />
@@ -68,4 +70,3 @@ export default function LineChart({ points, labels, maxValue }: LineChartProps) 
     </svg>
   );
 }
-

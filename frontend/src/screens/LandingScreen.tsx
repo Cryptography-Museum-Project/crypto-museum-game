@@ -13,16 +13,30 @@ interface LandingScreenProps {
 
 const LETTER_STEP_SECONDS = 0.045;
 
-function renderAnimatedLetters(text: string, startIndex: number) {
-  return text.split('').map((char, i) => (
+function renderAnimatedWord(word: string, startIndex: number) {
+  const letters = word.split('').map((char, i) => (
     <span
       key={i}
       className="letter-reveal"
       style={{ animationDelay: `${(startIndex + i) * LETTER_STEP_SECONDS}s` }}
     >
-      {char === ' ' ? '\u00A0' : char}
+      {char}
     </span>
   ));
+  // Слово оборачиваем в один inline-block с white-space: nowrap — иначе
+  // браузер видит точку переноса МЕЖДУ ЛЮБЫМИ двумя буквами (каждая буква —
+  // отдельный <span>) и может перенести строку посередине слова (как было:
+  // "цифрового ДНЯ" → "цифрового Д" / "НЯ" на экране 360px).
+  // Подчёркивание вешаем на КАЖДОЕ слово отдельно (эта обёртка уже
+  // inline-block), а не на родительский <h1> — там оно рисуется одной
+  // сплошной линией через всю строку, и text-decoration:none на дочернем
+  // пробеле её не прерывает (так работает text-decoration в CSS: снять
+  // его может только atomic inline-level элемент вроде inline-block).
+  return (
+    <span className="inline-block whitespace-nowrap underline decoration-2 underline-offset-4">
+      {letters}
+    </span>
+  );
 }
 
 function AnimatedTitle({ lines }: { lines: string[] }) {
@@ -30,11 +44,26 @@ function AnimatedTitle({ lines }: { lines: string[] }) {
   return (
     <span aria-label={lines.join(' ')}>
       {lines.map((line, lineIndex) => {
-        const letters = renderAnimatedLetters(line, cursor);
-        cursor += line.length;
+        const words = line.split(' ');
+        const rendered = words.map((word, wordIndex) => {
+          const el = renderAnimatedWord(word, cursor);
+          cursor += word.length;
+          const isLastWord = wordIndex === words.length - 1;
+          if (!isLastWord) cursor += 1; // сам пробел тоже занимает позицию в тайминге
+
+          // Пробел между словами — просто пробел, никакой обёртки не
+          // нужно: подчёркивание теперь висит на словах, а не на <h1>,
+          // так что через пробел ему рисоваться уже неоткуда.
+          return (
+            <span key={wordIndex}>
+              {el}
+              {!isLastWord && ' '}
+            </span>
+          );
+        });
         return (
           <span key={lineIndex} aria-hidden="true">
-            {letters}
+            {rendered}
             {lineIndex < lines.length - 1 && <br />}
           </span>
         );
@@ -93,7 +122,7 @@ export default function LandingScreen({ onStart }: LandingScreenProps) {
           собственных данных
         </p>
 
-        <h1 className="font-halvar font-light text-brand text-[34px] xl:text-[44px] uppercase leading-[1.05] mt-5 underline decoration-2 underline-offset-4">
+        <h1 className="font-halvar font-light text-brand text-[34px] xl:text-[44px] uppercase leading-[1.05] mt-5">
           <AnimatedTitle lines={['Маршрут', 'цифрового дня']} />
         </h1>
 

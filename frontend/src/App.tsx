@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import LandingScreen from './screens/LandingScreen';
 import ScenarioScreen from './screens/ScenarioScreen';
 import AnswerScreen from './screens/AnswerScreen';
@@ -44,7 +44,12 @@ function App() {
       });
   };
 
-  useEffect(loadGame, []);
+  const initialLoadStarted = useRef(false);
+  useEffect(() => {
+    if (initialLoadStarted.current) return;
+    initialLoadStarted.current = true;
+    loadGame();
+  }, []);
 
   const resetToLanding = () => {
     setStage('landing');
@@ -82,10 +87,17 @@ function App() {
     const nextScores = [...scores, chosen?.points ?? 0];
     setScores(nextScores);
 
+    const isLastScenario = index + 1 >= scenarios.length;
+
     if (sessionId && chosen) {
-      submitAnswer(sessionId, scenario.id, chosen.dbOptionId).catch((error) => {
-        console.error('Не удалось сохранить ответ на backend:', error);
-      });
+      const savePromise = submitAnswer(sessionId, scenario.id, chosen.dbOptionId).catch(
+        (error) => {
+          console.error('Не удалось сохранить ответ на backend:', error);
+        },
+      );
+      if (isLastScenario) {
+        await savePromise;
+      }
     }
 
     if (index + 1 < scenarios.length) {

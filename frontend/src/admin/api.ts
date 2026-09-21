@@ -2,9 +2,7 @@ import type { Category, VisualType } from '../types';
 import { apiRequest, API_BASE_URL, ApiError } from '../api/client';
 
 // ---------------------------------------------------------------------------
-// Токен администратора — храним в localStorage, чтобы вход не слетал при
-// обновлении страницы. Ключ и функции собраны в одном месте специально,
-// чтобы формат хранения можно было поменять, не трогая остальные экраны.
+// Токен администратора — храним в localStorage
 // ---------------------------------------------------------------------------
 
 const TOKEN_KEY = 'admin_token';
@@ -130,6 +128,14 @@ export function fetchAdminScenarios(token: string): Promise<AdminScenario[]> {
 
 export function fetchAdminScenario(token: string, scenarioId: number): Promise<AdminScenario> {
   return apiRequest(`/api/admin/scenarios/${scenarioId}`, { token });
+}
+
+export function createScenario(token: string): Promise<AdminScenario> {
+  return apiRequest('/api/admin/scenarios', { method: 'POST', body: {}, token });
+}
+
+export function deleteScenario(token: string, scenarioId: number): Promise<void> {
+  return apiRequest(`/api/admin/scenarios/${scenarioId}`, { method: 'DELETE', token });
 }
 
 export interface ScenarioUpdatePayload {
