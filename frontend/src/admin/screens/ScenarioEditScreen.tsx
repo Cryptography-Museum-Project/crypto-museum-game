@@ -4,6 +4,7 @@ import {
   getStoredToken,
   fetchAdminScenario,
   updateScenario,
+  deleteScenario,
   uploadScenarioImage,
   deleteScenarioImage,
   type AdminScenario,
@@ -66,7 +67,10 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
   const [code, setCode] = useState('');
   const [description, setDescription] = useState('');
   const [options, setOptions] = useState<AdminOption[]>([]);
+  const [isActive, setIsActive] = useState(true);
   const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [deleteState, setDeleteState] = useState<'idle' | 'deleting'>('idle');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imageState, setImageState] = useState<ImageState>('idle');
@@ -81,6 +85,7 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
         setCode(scenario.code);
         setDescription(scenario.description);
         setOptions(scenario.options);
+        setIsActive(scenario.isActive);
         setImageUrl(scenario.imageUrl);
       })
       .catch(() => setLoadError(true));
@@ -117,7 +122,7 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
         description,
         visual: original.visual,
         optionsHeading: original.optionsHeading,
-        isActive: original.isActive,
+        isActive,
         options: options.map((o, index) => ({
           id: o.id,
           code: o.code,
@@ -177,6 +182,28 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
       setImageError(err instanceof ApiError ? err.message : 'Не удалось убрать фото.');
     } finally {
       setImageState('idle');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!token) return;
+    const confirmed = window.confirm(
+      `Удалить сценарий ${scenarioId}? Это действие нельзя отменить.`,
+    );
+    if (!confirmed) return;
+
+    setDeleteError(null);
+    setDeleteState('deleting');
+    try {
+      await deleteScenario(token, scenarioId);
+      onBack();
+    } catch (err) {
+      setDeleteError(
+        err instanceof ApiError
+          ? err.message
+          : 'Не удалось удалить сценарий. Попробуйте ещё раз.',
+      );
+      setDeleteState('idle');
     }
   };
 
@@ -257,6 +284,19 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
 
         {imageError && <p className="text-[12px] text-red-600 mb-3">{imageError}</p>}
 
+        <label className="flex items-center gap-2 text-[13px] text-ink mb-4">
+          <input
+            type="checkbox"
+            checked={isActive}
+            onChange={(e) => {
+              setIsActive(e.target.checked);
+              setSaveState('idle');
+            }}
+            className={`w-4 h-4 accent-brand ${CHOICE_INPUT}`}
+          />
+          {isActive ? 'активен в игре' : 'резерв (не показывается посетителям)'}
+        </label>
+
         <textarea
           value={description}
           onChange={(e) => {
@@ -319,9 +359,20 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
           type="button"
           onClick={handleSave}
           disabled={saveState === 'saving'}
-          className={`w-full rounded-[5px] text-white text-[15px] font-bold py-4 mt-6 mb-4 disabled:opacity-60 ${PRIMARY_BUTTON}`}
+          className={`w-full rounded-[5px] text-white text-[15px] font-bold py-4 mt-6 disabled:opacity-60 ${PRIMARY_BUTTON}`}
         >
           {saveState === 'saving' ? 'Сохранение…' : saveState === 'saved' ? 'Сохранено ✓' : 'Сохранить'}
+        </button>
+
+        {deleteError && <p className="text-[13px] text-red-600 mt-3">{deleteError}</p>}
+
+        <button
+          type="button"
+          onClick={handleDelete}
+          disabled={deleteState === 'deleting'}
+          className={`w-full text-[13px] text-red-600 font-semibold py-3 mt-2 mb-4 rounded-sm disabled:opacity-60 ${FOCUS_RING}`}
+        >
+          {deleteState === 'deleting' ? 'Удаление…' : 'Удалить сценарий'}
         </button>
       </div>
     </PhoneScreen>

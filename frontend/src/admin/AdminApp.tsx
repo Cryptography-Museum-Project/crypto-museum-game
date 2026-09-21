@@ -6,7 +6,7 @@ import ScenariosListScreen from './screens/ScenariosListScreen';
 import ScenarioEditScreen from './screens/ScenarioEditScreen';
 import ProfilesScreen from './screens/ProfilesScreen';
 import type { AdminTab } from './components/TopNav';
-import { clearStoredToken, getStoredToken, whoAmI } from './api';
+import { clearStoredToken, createScenario, getStoredToken, whoAmI } from './api';
 
 type Stage =
   | { name: 'checking-session' }
@@ -60,9 +60,16 @@ export default function AdminApp() {
         <ScenariosListScreen
           onChangeTab={goToTab}
           onOpenScenario={(scenarioId) => setStage({ name: 'scenario-edit', scenarioId })}
-          onAddScenario={() =>
-            window.alert('Добавление нового сценария подключим вместе с бэкендом.')
-          }
+          onAddScenario={async () => {
+            const token = getStoredToken();
+            if (!token) return;
+            try {
+              const scenario = await createScenario(token);
+              setStage({ name: 'scenario-edit', scenarioId: scenario.id });
+            } catch {
+              window.alert('Не удалось создать сценарий. Попробуйте ещё раз.');
+            }
+          }}
         />
       );
 

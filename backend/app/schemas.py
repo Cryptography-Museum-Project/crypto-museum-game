@@ -1,13 +1,3 @@
-"""
-Схемы данных, которые "ходят" через API.
-
-Модели в models.py — это то, как данные лежат в базе (snake_case,
-питоновский стиль). Схемы здесь — это то, что видит снаружи фронтенд:
-поля отдаются в camelCase (optionsHeading, totalScore и т.д.), потому
-что именно так называются поля в frontend/src/types.ts. Так подключение
-фронтенда к этому API в будущем не потребует переименовывать поля.
-"""
-
 from __future__ import annotations
 
 from typing import Literal, Optional
@@ -145,6 +135,18 @@ class ScenarioUpdate(CamelModel):
 
 class ScenarioAdmin(ScenarioPublic):
     is_active: bool
+
+
+class ScenarioCreate(CamelModel):
+    """Пустой черновик — куратор сразу попадает в редактор и заполняет
+    название, вопрос и варианты. Новый сценарий создаётся как "резервный"
+    (is_active=False), чтобы не добавлять 11-й активный вопрос в игру
+    незаметно — куратор включает его сам, когда контент готов."""
+
+    code: str = "новый сценарий"
+    category: Category = "Пароли"
+    description: str = ""
+    visual: str = "password"
 
 
 class TierUpdate(CamelModel):

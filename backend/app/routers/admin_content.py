@@ -1,13 +1,3 @@
-"""
-Редактирование игрового контента из админ-панели:
-- сценарии и их варианты ответов;
-- тексты уровней (профилей) результата;
-- фото сценариев (загрузка файла поверх встроенной иллюстрации).
-
-Все эндпоинты здесь защищены — работают только с валидным токеном
-администратора (см. app/security.py::get_current_admin).
-"""
-
 import os
 import uuid
 
@@ -16,8 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
-from app.models import AdminUser, Scenario, ScenarioOption, Tier
-from app.schemas import ScenarioAdmin, ScenarioUpdate, TierAdmin, TierUpdate
+from app.models import AdminUser, Scenario, ScenarioOption, SessionAnswer, Tier
+from app.schemas import ScenarioAdmin, ScenarioCreate, ScenarioUpdate, TierAdmin, TierUpdate
 from app.security import get_current_admin
 
 router = APIRouter(prefix="/api/admin", tags=["admin-content"])
@@ -26,10 +16,6 @@ router = APIRouter(prefix="/api/admin", tags=["admin-content"])
 # Фото сценариев — общие настройки для загрузки
 # ---------------------------------------------------------------------------
 
-# Ограничиваем и тип, и размер: во-первых, отдаём эти файлы напрямую как
-# статику (см. app/main.py), поэтому пускать что попало (например .svg
-# с встроенным script) небезопасно; во-вторых, это фото для маленькой
-# карточки в игре, 5 МБ более чем достаточно даже с большим запасом.
 ALLOWED_IMAGE_TYPES = {
     "image/png": ".png",
     "image/jpeg": ".jpg",
@@ -80,6 +66,74 @@ def get_scenario_admin(
     if not scenario:
         raise HTTPException(status_code=404, detail="Сценарий не найден")
     return scenario
+
+
+@router.post("/scenarios", response_model=ScenarioAdmin, status_code=201)
+def create_scenario(
+    payload: ScenarioCreate = ScenarioCreate(),
+    db: Session = Depends(get_db),
+    admin: AdminUser = Depends(get_current_admin),
+):
+    """
+    Создаёт пустой черновик сценария с двумя вариантами ответа (0 и 10
+    баллов), чтобы редактор сразу открылся в рабочем виде. Сохраняется
+    как "резервный" (is_active=False) — куратор включает его из редактора,
+    когда допишет вопрос и варианты.
+    """
+    last_order = db.query(Scenario).count()
+    scenario = Scenario(
+        code=payload.code,
+        category=payload.category,
+        description=payload.description,
+        visual=payload.visual,
+        order_index=last_order,
+        is_active=False,
+        options=[
+            ScenarioOption(code="01", label="", points=10, explanation="", order_index=0),
+            ScenarioOption(code="02", label="", points=0, explanation="", order_index=1),
+        ],
+    )
+    db.add(scenario)
+    db.commit()
+    db.refresh(scenario)
+    return scenario
+
+
+@router.delete("/scenarios/{scenario_id}", status_code=204)
+def delete_scenario(
+    scenario_id: int,
+    db: Session = Depends(get_db),
+    admin: AdminUser = Depends(get_current_admin),
+):
+    """
+    Удаляет сценарий целиком (вместе с его вариантами ответов).
+
+    Если по сценарию уже есть сохранённые ответы в статистике —
+    удалять нельзя, иначе исказится история прохождений задним числом.
+    В этом случае куратору нужно выключить сценарий (is_active=False,
+    "резерв") через редактор вместо удаления.
+    """
+    scenario = db.query(Scenario).filter(Scenario.id == scenario_id).first()
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Сценарий не найден")
+
+    has_answers = (
+        db.query(SessionAnswer).filter(SessionAnswer.scenario_id == scenario_id).first()
+        is not None
+    )
+    if has_answers:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "По этому сценарию уже есть сохранённые ответы в статистике — "
+                "удалить нельзя, чтобы не исказить историю прохождений. "
+                "Выключите его (резерв) вместо удаления."
+            ),
+        )
+
+    _delete_scenario_image_file(scenario.image_url)
+    db.delete(scenario)
+    db.commit()
 
 
 @router.patch("/scenarios/{scenario_id}", response_model=ScenarioAdmin)
@@ -168,9 +222,6 @@ async def upload_scenario_image(
 
     os.makedirs(SCENARIOS_UPLOAD_DIR, exist_ok=True)
 
-    # Уникальное имя файла на каждую загрузку (а не просто scenario-{id})
-    # — иначе браузер посетителя может закешировать старую картинку под
-    # тем же именем и не подхватить замену.
     filename = f"scenario-{scenario_id}-{uuid.uuid4().hex}{extension}"
     with open(os.path.join(SCENARIOS_UPLOAD_DIR, filename), "wb") as f:
         f.write(contents)
