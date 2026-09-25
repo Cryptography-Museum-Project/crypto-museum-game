@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import PhoneScreen from '../components/PhoneScreen';
 import GameMasthead from '../components/GameMasthead';
+import RouteProgress from '../components/RouteProgress';
 import Footer from '../components/Footer';
 import homeIcon from '../assets/house-icon.svg';
 import replayIcon from '../assets/replay-icon.svg';
 import bastionLogo from '../assets/bastion-logo.svg';
 import { TICKET_URL, EXHIBITION_URL } from '../constants';
 import type { FinishResponse } from '../api/game';
+import type { VisualType } from '../types';
 import { PRIMARY_BUTTON, ICON_BUTTON, TEXT_LINK, FOCUS_RING } from '../styles/interactive';
 
 type ResultTier = FinishResponse['tier'];
@@ -14,6 +16,9 @@ type ResultTier = FinishResponse['tier'];
 interface ResultScreenProps {
   score: number;
   tier: ResultTier;
+  // визуалы сценариев по порядку — на десктопе показываем всю цепочку
+  // маршрута цветной, включая щит: визуальное завершение пути
+  route: VisualType[];
   onHome?: () => void;
   onReplay?: () => void;
   onOpenMemo?: () => void;
@@ -116,7 +121,14 @@ function ScoreBar({
   );
 }
 
-export default function ResultScreen({ score, tier, onHome, onReplay, onOpenMemo }: ResultScreenProps) {
+export default function ResultScreen({
+  score,
+  tier,
+  route,
+  onHome,
+  onReplay,
+  onOpenMemo,
+}: ResultScreenProps) {
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
 
@@ -158,9 +170,14 @@ export default function ResultScreen({ score, tier, onHome, onReplay, onOpenMemo
   return (
     <PhoneScreen>
       <GameMasthead onHome={onHome} />
-      <ScoreBar score={score} onHome={onHome} onShare={handleShare} shared={shared} />
+      {/* Мобильный: полоса индекса. Десктоп: пройденный маршрут целиком —
+          счёт уже крупно справа, «поделиться» есть внизу */}
+      <div className="xl:hidden">
+        <ScoreBar score={score} onHome={onHome} onShare={handleShare} shared={shared} />
+      </div>
+      <RouteProgress route={route} completed={route.length} className="hidden xl:flex" />
 
-      <div className="flex flex-col flex-1 xl:grid xl:grid-cols-[1fr_220px] xl:gap-x-16 xl:items-start xl:mt-6">
+      <div className="flex flex-col flex-1 xl:grid xl:grid-cols-[1fr_220px] xl:gap-x-16 xl:items-start xl:mt-12">
         <div className="flex flex-col items-center mt-8 xl:items-end xl:mt-0 xl:col-start-2 xl:row-start-1">
           <span className="font-halvar font-bold text-brand text-[56px] xl:text-[72px] leading-none underline decoration-2 underline-offset-4">
             {score}
