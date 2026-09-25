@@ -1,6 +1,7 @@
-import type { Scenario } from '../types';
+import type { Scenario, VisualType } from '../types';
 import PhoneScreen from '../components/PhoneScreen';
 import TopBar from '../components/TopBar';
+import RouteProgress from '../components/RouteProgress';
 import GameMasthead from '../components/GameMasthead';
 import Footer from '../components/Footer';
 import OptionsList from '../components/OptionsList';
@@ -20,7 +21,11 @@ import purchasePhone from '../assets/scenario-visuals/purchase-phone.png';
 
 interface ScenarioScreenProps {
   scenario: Scenario;
+  // порядковый индекс текущего сценария (0..total-1)
+  index: number;
   total: number;
+  // визуалы всех сценариев по порядку — для цепочки маршрута на десктопе
+  route: VisualType[];
   onSelectOption?: (optionId: string) => void;
   onHome?: () => void;
 }
@@ -85,17 +90,29 @@ function renderVisual(scenario: Scenario) {
   }
 }
 
-export default function ScenarioScreen({ scenario, total, onSelectOption, onHome }: ScenarioScreenProps) {
+export default function ScenarioScreen({
+  scenario,
+  index,
+  total,
+  route,
+  onSelectOption,
+  onHome,
+}: ScenarioScreenProps) {
   return (
     <PhoneScreen>
       <GameMasthead onHome={onHome} />
-      <TopBar current={scenario.id} total={total} onHome={onHome} />
 
-      <div className="flex flex-col flex-1 xl:grid xl:grid-cols-[1fr_260px] xl:gap-x-16 xl:items-start xl:mt-4">
+      {/* Мобильный: прогресс-бар. Десктоп: цепочка иконок маршрута по макету */}
+      <div className="xl:hidden">
+        <TopBar current={index + 1} total={total} onHome={onHome} />
+      </div>
+      <RouteProgress route={route} completed={index} className="hidden xl:flex" />
+
+      <div className="flex flex-col flex-1 xl:grid xl:grid-cols-[1fr_260px] xl:grid-rows-[auto_1fr_auto] xl:gap-x-16 xl:items-start xl:mt-12">
         <h1 className="font-halvar font-light text-brand text-[34px] xl:text-[29px] uppercase leading-none mt-5 xl:mt-0 xl:col-start-1 xl:row-start-1">
           {scenario.code}
         </h1>
-        <p className="text-ink text-[15px] xl:text-[17px] leading-snug mt-3 min-h-21 xl:min-h-0 xl:col-start-1 xl:row-start-2">
+        <p className="text-ink text-[15px] xl:text-[22px] leading-snug mt-3 min-h-21 xl:mt-5 xl:min-h-0 xl:col-start-1 xl:row-start-2">
           {scenario.description}
         </p>
 

@@ -160,7 +160,9 @@ function App() {
     return (
       <ScenarioScreen
         scenario={scenarios[index]}
+        index={index}
         total={scenarios.length}
+        route={scenarios.map((item) => item.visual)}
         onSelectOption={handleSelectOption}
         onHome={resetToLanding}
       />
@@ -205,6 +207,7 @@ function App() {
     <ResultScreen
       score={result.totalScore}
       tier={result.tier}
+      route={scenarios.map((item) => item.visual)}
       onHome={resetToLanding}
       onReplay={resetToLanding}
       onOpenMemo={() => setStage('memo')}
