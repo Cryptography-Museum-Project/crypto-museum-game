@@ -24,11 +24,6 @@ import purchaseColor from '../assets/scenario-visuals/purchase-phone-icon-color.
 import resultGrey from '../assets/scenario-visuals/result-icon-grey.svg';
 import resultColor from '../assets/scenario-visuals/result-icon-color.svg';
 
-// Иконки от дизайнера разного размера (57–65 × 42–58) и круг в каждой стоит
-// в своём месте. Чтобы цепочка выглядела ровной, выравниваем не рамки SVG,
-// а центры кругов: у всех иконок круг одного диаметра (~41.5 ед.), поэтому
-// при общем масштабе круги получаются одинаковыми.
-// w/h — viewBox, cx/cy — центр круга (для щита — центр по X и уровень пунктира).
 interface IconAsset {
   src: string;
   w: number;
@@ -40,10 +35,6 @@ interface IconAsset {
 interface RouteIcon {
   grey: IconAsset;
   color: IconAsset;
-  // насколько рисунок выходит за круг на уровне линии маршрута (px), слева
-  // и справа: машина такси, пачка денег, купон у подарка, края щита.
-  // Нужно, чтобы тире между иконками стояло строго посередине свободного
-  // промежутка, а не пряталось частично под соседнюю иконку.
   overL?: number;
   overR?: number;
 }
@@ -103,9 +94,6 @@ const RESULT_ICON: RouteIcon = {
   overR: 4,
 };
 
-// Масштаб 1 ед. SVG = 1px. Ячейка иконки — ровно по кругу (42px), всё, что
-// выходит за круг (машина, конверт, значки), свободно висит поверх соседних
-// связок. Центр круга в ячейке — (21, 34); высота 59 рассчитана по щиту.
 const CELL_W = 42;
 const CELL_H = 59;
 const ANCHOR_X = CELL_W / 2;
@@ -117,14 +105,7 @@ const LINE_H = 2;
 
 const DASH_W = 10;
 
-// Связка между иконками — одно тире по центру свободного промежутка.
-// В исходных SVG пунктир был «зашит» по краям иконок, и из-за разной
-// ширины промежутков и субпиксельного позиционирования он выглядел
-// неровным. Теперь из SVG он убран, а связка — один отрезок фиксированной
-// длины на общей для всей цепочки высоте.
 function Connector({ done, padL, padR }: { done: boolean; padL: number; padR: number }) {
-  // Промежутки между кругами одинаковые; тире сдвигается к центру той части
-  // промежутка, которая не закрыта рисунком соседних иконок.
   const shift = (padL - padR) / 2;
   return (
     <li
@@ -208,12 +189,12 @@ export default function RouteProgress({ route, completed, className = '' }: Rout
   const allDone = completed >= route.length;
 
   return (
-    // pl/pr — запас под то, что выходит за круги крайних иконок (конверт у
-    // смартфона слева, купон у щита справа): иначе их срежет overflow-hidden
-    // колонки, а так они встают ровно по краям текстового блока
     <ol aria-label="Маршрут дня" className={`flex items-start pl-[5px] pr-[10px] ${className}`}>
       {route.map((visual, index) => {
         const done = index < completed;
+        // иконка текущего сценария цветная сразу при переходе на его экран;
+        // тире после неё остаётся серым, пока сценарий не пройден
+        const active = index <= completed;
         const icon = ICONS[visual];
         const status = done ? 'пройден' : index === completed ? 'текущий' : 'впереди';
         const label = `Сценарий ${index + 1} — ${status}`;
@@ -221,10 +202,10 @@ export default function RouteProgress({ route, completed, className = '' }: Rout
           <Fragment key={index}>
             <Stop number={index + 1}>
               {icon ? (
-                <IconInCell asset={done ? icon.color : icon.grey} alt={label} />
+                <IconInCell asset={active ? icon.color : icon.grey} alt={label} />
               ) : (
                 <>
-                  <FallbackCircle done={done} />
+                  <FallbackCircle done={active} />
                   <span className="sr-only">{label}</span>
                 </>
               )}
