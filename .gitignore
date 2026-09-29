@@ -141,3 +141,15 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# База данных и загруженные файлы — не должны попадать в git
+*.db
+*.sqlite3
+uploads/
+game-backup.db
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/

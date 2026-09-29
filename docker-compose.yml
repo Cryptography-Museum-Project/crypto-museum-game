@@ -1,0 +1,48 @@
+# Полный запуск проекта одной командой (из корня репозитория):
+#   docker compose up --build -d
+# Игра:        http://localhost:8080
+# Админ-панель: http://localhost:8080/admin
+# Swagger API: http://localhost:8080/docs
+#
+# Настройки (пароль админа, секрет JWT, порт) берутся из файла .env
+# в корне проекта — см. .env.example.
+
+services:
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: sqlite:////app/data/game.db
+      UPLOAD_DIR: /app/uploads
+      JWT_SECRET: ${JWT_SECRET:-change-me-please}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-240}
+      ADMIN_DEFAULT_USERNAME: ${ADMIN_DEFAULT_USERNAME:-admin}
+      ADMIN_DEFAULT_PASSWORD: ${ADMIN_DEFAULT_PASSWORD:-admin123}
+      # Фронтенд и API открываются с одного адреса через nginx,
+      # поэтому CORS фактически не используется.
+      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-*}
+    volumes:
+      # База и загруженные фото живут в томах Docker и не пропадают
+      # при пересборке или перезапуске контейнеров.
+      - db_data:/app/data
+      - uploads_data:/app/uploads
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+    # Наружу порт бэкенда не открываем: все запросы идут через nginx.
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "${APP_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  uploads_data:

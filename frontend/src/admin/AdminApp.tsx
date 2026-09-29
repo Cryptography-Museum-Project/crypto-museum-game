@@ -6,7 +6,7 @@ import ScenariosListScreen from './screens/ScenariosListScreen';
 import ScenarioEditScreen from './screens/ScenarioEditScreen';
 import ProfilesScreen from './screens/ProfilesScreen';
 import type { AdminTab } from './components/TopNav';
-import { clearStoredToken, createScenario, getStoredToken, whoAmI } from './api';
+import { clearStoredToken, getStoredToken, whoAmI } from './api';
 
 type Stage =
   | { name: 'checking-session' }
@@ -15,6 +15,7 @@ type Stage =
   | { name: 'answer-stats'; scenarioId?: number }
   | { name: 'scenarios' }
   | { name: 'scenario-edit'; scenarioId: number }
+  | { name: 'scenario-new' }
   | { name: 'profiles' };
 
 export default function AdminApp() {
@@ -60,16 +61,9 @@ export default function AdminApp() {
         <ScenariosListScreen
           onChangeTab={goToTab}
           onOpenScenario={(scenarioId) => setStage({ name: 'scenario-edit', scenarioId })}
-          onAddScenario={async () => {
-            const token = getStoredToken();
-            if (!token) return;
-            try {
-              const scenario = await createScenario(token);
-              setStage({ name: 'scenario-edit', scenarioId: scenario.id });
-            } catch {
-              window.alert('Не удалось создать сценарий. Попробуйте ещё раз.');
-            }
-          }}
+          // Сценарий не создаётся в базе по клику — только открывается
+          // пустой редактор. Запись появится после «Сохранить».
+          onAddScenario={() => setStage({ name: 'scenario-new' })}
         />
       );
 
@@ -78,6 +72,15 @@ export default function AdminApp() {
         <ScenarioEditScreen
           scenarioId={stage.scenarioId}
           onBack={() => setStage({ name: 'scenarios' })}
+        />
+      );
+
+    case 'scenario-new':
+      return (
+        <ScenarioEditScreen
+          scenarioId={null}
+          onBack={() => setStage({ name: 'scenarios' })}
+          onCreated={(scenarioId) => setStage({ name: 'scenario-edit', scenarioId })}
         />
       );
 
