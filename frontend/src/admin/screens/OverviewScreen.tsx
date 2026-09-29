@@ -122,7 +122,11 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
 
   useEffect(() => {
     if (!token) return;
-    Promise.all([fetchScenarioStats(token), fetchMistakes(token, 3), fetchProfileDistribution(token)])
+    Promise.all([
+      fetchScenarioStats(token),
+      fetchMistakes(token, 3),
+      fetchProfileDistribution(token),
+    ])
       .then(([scenarioData, mistakeData, profileData]) => {
         setScenarioStats(scenarioData);
         setMistakes(mistakeData);
@@ -210,16 +214,22 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
                   {scenario.errorRate}%
                 </span>
                 {/* Номер сценария и его код — сразу после процента */}
-                <span className="text-[12px] text-ink shrink-0 flex items-baseline gap-1">
-                  <span className="tabular-nums text-right inline-block w-[1.1em]">
+                {/* Фиксированная ширина колонки названия: иначе дорожка полосы
+                    начинается в разных местах и одинаковый процент выглядит
+                    по-разному в зависимости от длины названия сценария. */}
+                <span className="text-[12px] text-ink shrink-0 w-[6.75rem] flex items-baseline gap-1 min-w-0">
+                  <span className="tabular-nums text-right inline-block w-[1.1em] shrink-0">
                     {String(scenario.scenarioId).padStart(2, '\u00A0')}
                   </span>
-                  <span>| {scenario.code.toLowerCase()}</span>
+                  <span className="truncate" title={scenario.code.toLowerCase()}>
+                    | {scenario.code.toLowerCase()}
+                  </span>
                 </span>
                 <span className="flex-1 h-1.5 bg-canvas rounded-full overflow-hidden">
                   <span
                     className="block h-full bg-brand rounded-full"
-                    style={{ width: `${Math.min(scenario.errorRate * 4, 100)}%` }}
+                    // Длина полосы = доля ошибок: 40% ошибок — полоса на 40% дорожки.
+                    style={{ width: `${Math.min(Math.max(scenario.errorRate, 0), 100)}%` }}
                   />
                 </span>
                 <svg
@@ -246,7 +256,10 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
           <p className="text-[12px] font-bold text-ink mb-3">Частые ошибки</p>
           {mistakes.length === 0 && <p className="text-[12px] text-muted">Пока нет данных.</p>}
           {mistakes.map((mistake) => (
-            <div key={`${mistake.scenarioId}-${mistake.optionLabel}`} className="flex gap-4 mb-3 last:mb-0">
+            <div
+              key={`${mistake.scenarioId}-${mistake.optionLabel}`}
+              className="flex gap-4 mb-3 last:mb-0"
+            >
               {/* Фиксированная ширина у процента */}
               <span className="font-halvar font-bold text-brand text-[26px] shrink-0 w-24 tabular-nums whitespace-nowrap">
                 {mistake.pickedPercent}%
