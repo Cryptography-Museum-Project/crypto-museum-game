@@ -3,6 +3,7 @@ import PhoneScreen from '../../components/PhoneScreen';
 import {
   getStoredToken,
   fetchAdminScenario,
+  createScenario,
   updateScenario,
   deleteScenario,
   uploadScenarioImage,
@@ -21,8 +22,11 @@ import {
 } from '../../styles/interactive';
 
 interface ScenarioEditScreenProps {
-  scenarioId: number;
+  /** null — новый сценарий: в базе он появится только после «Сохранить». */
+  scenarioId: number | null;
   onBack: () => void;
+  /** Вызывается после первого сохранения нового сценария. */
+  onCreated?: (scenarioId: number) => void;
 }
 
 function BackArrow() {
@@ -57,17 +61,43 @@ const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 
 const POINT_OPTIONS: AdminOption['points'][] = [0, 5, 10];
 
-type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+type SaveState = 'idle' | 'saving' | 'saved' | 'error' | 'empty';
+
+// Шаблон нового сценария. Живёт только в памяти браузера, пока куратор
+// не нажмёт «Сохранить» — поэтому клик по «добавить» без заполнения
+// полей ничего не создаёт в базе. Отрицательные id — временные ключи
+// для React, на сервер варианты уходят без id и создаются заново.
+const NEW_SCENARIO_TEMPLATE: AdminScenario = {
+  id: 0,
+  code: '',
+  category: 'Пароли',
+  description: '',
+  visual: 'password',
+  imageUrl: null,
+  optionsHeading: 'Ваши действия?',
+  isActive: false,
+  options: [
+    { id: -1, code: '01', label: '', points: 10, explanation: '' },
+    { id: -2, code: '02', label: '', points: 0, explanation: '' },
+  ],
+};
 type ImageState = 'idle' | 'uploading' | 'removing';
 
-export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditScreenProps) {
+export default function ScenarioEditScreen({
+  scenarioId,
+  onBack,
+  onCreated,
+}: ScenarioEditScreenProps) {
   const token = getStoredToken();
-  const [original, setOriginal] = useState<AdminScenario | null>(null);
+  const isNew = scenarioId === null;
+  const [original, setOriginal] = useState<AdminScenario | null>(
+    isNew ? NEW_SCENARIO_TEMPLATE : null,
+  );
   const [loadError, setLoadError] = useState(false);
   const [code, setCode] = useState('');
   const [description, setDescription] = useState('');
-  const [options, setOptions] = useState<AdminOption[]>([]);
-  const [isActive, setIsActive] = useState(true);
+  const [options, setOptions] = useState<AdminOption[]>(isNew ? NEW_SCENARIO_TEMPLATE.options : []);
+  const [isActive, setIsActive] = useState(isNew ? NEW_SCENARIO_TEMPLATE.isActive : true);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [deleteState, setDeleteState] = useState<'idle' | 'deleting'>('idle');
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -77,8 +107,28 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
   const [imageError, setImageError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Фото для нового сценария: загрузить на сервер можно только после
+  // создания, поэтому до «Сохранить» держим файл локально с превью.
+  const [pendingImage, setPendingImageState] = useState<{ file: File; url: string } | null>(null);
+  const pendingUrlRef = useRef<string | null>(null);
+
+  const setPendingImage = (file: File | null) => {
+    if (pendingUrlRef.current) URL.revokeObjectURL(pendingUrlRef.current);
+    const url = file ? URL.createObjectURL(file) : null;
+    pendingUrlRef.current = url;
+    setPendingImageState(file && url ? { file, url } : null);
+  };
+
+  // Освобождаем превью, если редактор закрыли, не сохранив.
+  useEffect(
+    () => () => {
+      if (pendingUrlRef.current) URL.revokeObjectURL(pendingUrlRef.current);
+    },
+    [],
+  );
+
   useEffect(() => {
-    if (!token) return;
+    if (!token || scenarioId === null) return;
     fetchAdminScenario(token, scenarioId)
       .then((scenario) => {
         setOriginal(scenario);
@@ -112,30 +162,81 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
     setSaveState('idle');
   };
 
+  const buildPayload = () => ({
+    code,
+    category: original.category,
+    description,
+    visual: original.visual,
+    optionsHeading: original.optionsHeading,
+    isActive,
+    options: options.map((o, index) => ({
+      // У нового сценария id вариантов временные — не отправляем их.
+      id: isNew ? undefined : o.id,
+      code: o.code,
+      label: o.label,
+      points: o.points,
+      explanation: o.explanation,
+      orderIndex: index,
+    })),
+  });
+
+  const isBlank =
+    !code.trim() &&
+    !description.trim() &&
+    options.every((o) => !o.label.trim() && !o.explanation.trim()) &&
+    !pendingImage;
+
   const handleSave = async () => {
     if (!token) return;
-    setSaveState('saving');
-    try {
-      await updateScenario(token, scenarioId, {
-        code,
-        category: original.category,
-        description,
-        visual: original.visual,
-        optionsHeading: original.optionsHeading,
-        isActive,
-        options: options.map((o, index) => ({
-          id: o.id,
-          code: o.code,
-          label: o.label,
-          points: o.points,
-          explanation: o.explanation,
-          orderIndex: index,
-        })),
-      });
-      setSaveState('saved');
-    } catch {
-      setSaveState('error');
+
+    if (scenarioId !== null) {
+      setSaveState('saving');
+      try {
+        await updateScenario(token, scenarioId, buildPayload());
+        setSaveState('saved');
+      } catch {
+        setSaveState('error');
+      }
+      return;
     }
+
+    // Новый сценарий: пустой не создаём вообще.
+    if (isBlank) {
+      setSaveState('empty');
+      return;
+    }
+
+    setSaveState('saving');
+    let createdId: number | null = null;
+    try {
+      const created = await createScenario(token);
+      createdId = created.id;
+      await updateScenario(token, created.id, buildPayload());
+    } catch {
+      // Если черновик успел создаться, а заполнить его не удалось —
+      // убираем его, чтобы в списке не осталась пустая строка.
+      if (createdId !== null) {
+        await deleteScenario(token, createdId).catch(() => undefined);
+      }
+      setSaveState('error');
+      return;
+    }
+
+    if (pendingImage) {
+      try {
+        await uploadScenarioImage(token, createdId, pendingImage.file);
+        setPendingImage(null);
+      } catch (err) {
+        setImageError(
+          err instanceof ApiError
+            ? err.message
+            : 'Сценарий сохранён, но фото не загрузилось. Добавьте его ещё раз.',
+        );
+      }
+    }
+
+    setSaveState('saved');
+    onCreated?.(createdId);
   };
 
   const handlePickFile = () => {
@@ -160,6 +261,13 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
     }
 
     setImageError(null);
+
+    if (scenarioId === null) {
+      setPendingImage(file);
+      setSaveState('idle');
+      return;
+    }
+
     setImageState('uploading');
     try {
       const updated = await uploadScenarioImage(token, scenarioId, file);
@@ -174,6 +282,12 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
   const handleRemoveImage = async () => {
     if (!token) return;
     setImageError(null);
+
+    if (scenarioId === null) {
+      setPendingImage(null);
+      return;
+    }
+
     setImageState('removing');
     try {
       const updated = await deleteScenarioImage(token, scenarioId);
@@ -186,7 +300,7 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
   };
 
   const handleDelete = async () => {
-    if (!token) return;
+    if (!token || scenarioId === null) return;
     const confirmed = window.confirm(
       `Удалить сценарий ${scenarioId}? Это действие нельзя отменить.`,
     );
@@ -199,13 +313,17 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
       onBack();
     } catch (err) {
       setDeleteError(
-        err instanceof ApiError
-          ? err.message
-          : 'Не удалось удалить сценарий. Попробуйте ещё раз.',
+        err instanceof ApiError ? err.message : 'Не удалось удалить сценарий. Попробуйте ещё раз.',
       );
       setDeleteState('idle');
     }
   };
+
+  const imageSrc = isNew
+    ? (pendingImage?.url ?? null)
+    : imageUrl
+      ? `${API_BASE_URL}${imageUrl}`
+      : null;
 
   return (
     <PhoneScreen>
@@ -220,7 +338,9 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
       </button>
 
       <div className="flex-1 overflow-y-auto -mx-5 px-5">
-        <p className="font-halvar font-bold text-brand text-[22px] mb-3">{scenarioId}</p>
+        <p className="font-halvar font-bold text-brand text-[22px] mb-3">
+          {isNew ? 'новый' : scenarioId}
+        </p>
 
         <div className="flex gap-2 mb-1">
           <input
@@ -244,7 +364,7 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
             className="hidden"
           />
 
-          {imageUrl ? (
+          {imageSrc ? (
             <div className="shrink-0 relative w-[46px] h-[46px]">
               <button
                 type="button"
@@ -253,11 +373,7 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
                 aria-label="Заменить фото"
                 className={`w-full h-full overflow-hidden rounded-[5px] border border-line disabled:opacity-60 ${FOCUS_RING}`}
               >
-                <img
-                  src={`${API_BASE_URL}${imageUrl}`}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
+                <img src={imageSrc} alt="" className="w-full h-full object-cover" />
               </button>
               <button
                 type="button"
@@ -349,6 +465,12 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
           ))}
         </div>
 
+        {saveState === 'empty' && (
+          <p className="text-[13px] text-red-600 mt-4">
+            Сценарий пустой — заполните хотя бы одно поле, чтобы сохранить.
+          </p>
+        )}
+
         {saveState === 'error' && (
           <p className="text-[13px] text-red-600 mt-4">
             Не удалось сохранить изменения. Попробуйте ещё раз.
@@ -361,19 +483,25 @@ export default function ScenarioEditScreen({ scenarioId, onBack }: ScenarioEditS
           disabled={saveState === 'saving'}
           className={`w-full rounded-[5px] text-white text-[15px] font-bold py-4 mt-6 disabled:opacity-60 ${PRIMARY_BUTTON}`}
         >
-          {saveState === 'saving' ? 'Сохранение…' : saveState === 'saved' ? 'Сохранено ✓' : 'Сохранить'}
+          {saveState === 'saving'
+            ? 'Сохранение…'
+            : saveState === 'saved'
+              ? 'Сохранено ✓'
+              : 'Сохранить'}
         </button>
 
         {deleteError && <p className="text-[13px] text-red-600 mt-3">{deleteError}</p>}
 
-        <button
-          type="button"
-          onClick={handleDelete}
-          disabled={deleteState === 'deleting'}
-          className={`w-full text-[13px] text-red-600 font-semibold py-3 mt-2 mb-4 rounded-sm disabled:opacity-60 ${FOCUS_RING}`}
-        >
-          {deleteState === 'deleting' ? 'Удаление…' : 'Удалить сценарий'}
-        </button>
+        {!isNew && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleteState === 'deleting'}
+            className={`w-full text-[13px] text-red-600 font-semibold py-3 mt-2 mb-4 rounded-sm disabled:opacity-60 ${FOCUS_RING}`}
+          >
+            {deleteState === 'deleting' ? 'Удаление…' : 'Удалить сценарий'}
+          </button>
+        )}
       </div>
     </PhoneScreen>
   );
