@@ -6,7 +6,7 @@ import ScenariosListScreen from './screens/ScenariosListScreen';
 import ScenarioEditScreen from './screens/ScenarioEditScreen';
 import ProfilesScreen from './screens/ProfilesScreen';
 import type { AdminTab } from './components/TopNav';
-import { clearStoredToken, getStoredToken, whoAmI } from './api';
+import { clearStoredToken, getStoredToken, whoAmI, type Period } from './api';
 
 type Stage =
   | { name: 'checking-session' }
@@ -20,6 +20,9 @@ type Stage =
 
 export default function AdminApp() {
   const [stage, setStage] = useState<Stage>({ name: 'checking-session' });
+  // Период статистики живёт здесь, а не внутри «Обзора»: так он не
+  // сбрасывается, когда админ открывает разбивку по сценарию и возвращается.
+  const [statsPeriod, setStatsPeriod] = useState<Period>('today');
 
   useEffect(() => {
     const token = getStoredToken();
@@ -48,13 +51,21 @@ export default function AdminApp() {
     case 'overview':
       return (
         <OverviewScreen
+          period={statsPeriod}
+          onChangePeriod={setStatsPeriod}
           onChangeTab={goToTab}
           onOpenScenarioStats={(scenarioId) => setStage({ name: 'answer-stats', scenarioId })}
         />
       );
 
     case 'answer-stats':
-      return <AnswerStatsScreen focusScenarioId={stage.scenarioId} onChangeTab={goToTab} />;
+      return (
+        <AnswerStatsScreen
+          period={statsPeriod}
+          focusScenarioId={stage.scenarioId}
+          onChangeTab={goToTab}
+        />
+      );
 
     case 'scenarios':
       return (

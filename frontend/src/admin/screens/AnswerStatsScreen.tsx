@@ -1,14 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import PhoneScreen from '../../components/PhoneScreen';
 import TopNav, { type AdminTab } from '../components/TopNav';
-import { getStoredToken, fetchScenarioStats, type ScenarioStat } from '../api';
+import {
+  getStoredToken,
+  fetchScenarioStats,
+  PERIOD_LABELS,
+  type Period,
+  type ScenarioStat,
+} from '../api';
 
 interface AnswerStatsScreenProps {
+  period: Period;
   focusScenarioId?: number;
   onChangeTab: (tab: AdminTab) => void;
 }
 
 export default function AnswerStatsScreen({
+  period,
   focusScenarioId,
   onChangeTab,
 }: AnswerStatsScreenProps) {
@@ -19,10 +27,10 @@ export default function AnswerStatsScreen({
   useEffect(() => {
     const token = getStoredToken();
     if (!token) return;
-    fetchScenarioStats(token)
+    fetchScenarioStats(token, period)
       .then(setScenarioStats)
       .catch(() => setError(true));
-  }, []);
+  }, [period]);
 
   useEffect(() => {
     if (!focusScenarioId) return;
@@ -44,6 +52,11 @@ export default function AnswerStatsScreen({
     <PhoneScreen>
       <TopNav active="scenarios" onChange={onChangeTab} />
       <div className="flex-1 overflow-y-auto -mx-5 px-5 space-y-4">
+        {/* Тот же период, что выбран на «Обзоре» — чтобы цифры здесь
+            совпадали с тем, что админ только что видел. */}
+        <p className="text-[12px] text-muted">
+          Период: <span className="font-semibold text-ink">{PERIOD_LABELS[period]}</span>
+        </p>
         {scenarioStats.map((scenario) => (
           <div
             key={scenario.scenarioId}

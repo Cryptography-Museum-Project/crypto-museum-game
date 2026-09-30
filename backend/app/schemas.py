@@ -226,6 +226,7 @@ class ProfileDistributionItem(CamelModel):
     key: str
     label: str
     percent: float
+    count: int = 0  # сколько завершённых прохождений получили этот профиль за период
 
 
 class CommonMistake(CamelModel):

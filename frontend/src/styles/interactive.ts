@@ -1,8 +1,7 @@
 // Единый набор классов для focus/hover/active состояний интерактивных
 // элементов проекта. Собрано в одном месте, чтобы у всех кнопок, ссылок
-// и полей ввода в игре и в админке состояния были одинаковыми — иначе
-// на каждом экране получается свой случайный набор эффектов.
-// Цвета — только из брендбука (--color-brand/canvas/ink), новых не вводим.
+// и полей ввода в игре и в админке состояния были одинаковыми.
+// Цвета — из брендбука (--color-brand/canvas/ink).
 
 // Фокус с клавиатуры — везде одно и то же брендовое синее кольцо.
 // :focus-visible, а не :focus — кольцо показывается только при навигации
@@ -40,13 +39,9 @@ export const ICON_BUTTON = `rounded-full hover:bg-ink/5 active:bg-ink/10 transit
 export const TEXT_LINK = `hover:opacity-70 active:opacity-60 transition-opacity ${FOCUS_RING}`;
 
 // Поля ввода (input/textarea): рамка светлеет на hover, становится
-// брендовой на фокусе — вместо голого outline-none без всякой замены,
-// как было раньше.
+// брендовой на фокусе.
 export const FIELD =
-  'border border-line hover:border-muted focus-visible:outline-none focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand transition-colors';
+  'border border-line hover:border-muted focus-visible:outline-none focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-brand transition-colors';
 
-// checkbox / radio: у браузеров по умолчанию свой (обычно синий, но не
-// брендовый и не одинаковый между браузерами) focus-ring — заменяем на тот
-// же брендовый, что и everywhere.
 export const CHOICE_INPUT =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1';

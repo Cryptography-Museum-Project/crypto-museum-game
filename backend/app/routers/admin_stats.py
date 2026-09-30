@@ -112,6 +112,24 @@ def period_bounds(period: Period, db: Session) -> tuple[datetime, datetime, date
     return start, now, start, start  # для "all" delta не считаем
 
 
+def period_range(period: Period, db: Session) -> tuple[datetime | None, datetime | None]:
+    """Границы выбранного периода для разделов «Ошибки по сценариям»,
+    «Частые ошибки» и «Профили». Для "all" — (None, None), то есть без
+    фильтра по времени. Так все блоки страницы «Обзор» считаются за один
+    и тот же период, что выбран в фильтре."""
+    if period == "all":
+        return None, None
+    start, end, _, _ = period_bounds(period, db)
+    return start, end
+
+
+def answers_in_period(query, start: datetime | None, end: datetime | None):
+    """Оставляет в запросе только ответы, данные в выбранный период."""
+    if start is None:
+        return query
+    return query.filter(SessionAnswer.answered_at >= start, SessionAnswer.answered_at <= end)
+
+
 def sessions_started_up_to(db: Session, moment: datetime) -> int:
     return db.query(func.count(GameSession.id)).filter(GameSession.started_at <= moment).scalar() or 0
 
@@ -217,23 +235,33 @@ def overview(
 
 @router.get("/scenarios", response_model=list[ScenarioStat])
 def scenario_stats(
+    period: Period = Query("all"),
     db: Session = Depends(get_db),
     admin: AdminUser = Depends(get_current_admin),
 ):
+    start, end = period_range(period, db)
     scenarios = db.query(Scenario).order_by(Scenario.order_index).all()
     result: list[ScenarioStat] = []
 
     for scenario in scenarios:
         total_answers = (
-            db.query(func.count(SessionAnswer.id))
-            .filter(SessionAnswer.scenario_id == scenario.id)
-            .scalar()
+            answers_in_period(
+                db.query(func.count(SessionAnswer.id)).filter(
+                    SessionAnswer.scenario_id == scenario.id
+                ),
+                start,
+                end,
+            ).scalar()
             or 0
         )
         wrong_answers = (
-            db.query(func.count(SessionAnswer.id))
-            .filter(SessionAnswer.scenario_id == scenario.id, SessionAnswer.points < 10)
-            .scalar()
+            answers_in_period(
+                db.query(func.count(SessionAnswer.id)).filter(
+                    SessionAnswer.scenario_id == scenario.id, SessionAnswer.points < 10
+                ),
+                start,
+                end,
+            ).scalar()
             or 0
         )
         error_rate = round(wrong_answers / total_answers * 100, 1) if total_answers else 0.0
@@ -242,9 +270,11 @@ def scenario_stats(
         # проценты нужно раздавать все вместе (см. percentages_of), а не
         # по одному, иначе они не будут гарантированно суммироваться в 100.
         picked_counts = [
-            db.query(func.count(SessionAnswer.id))
-            .filter(SessionAnswer.option_id == option.id)
-            .scalar()
+            answers_in_period(
+                db.query(func.count(SessionAnswer.id)).filter(SessionAnswer.option_id == option.id),
+                start,
+                end,
+            ).scalar()
             or 0
             for option in scenario.options
         ]
@@ -283,25 +313,29 @@ def scenario_stats(
 
 @router.get("/profiles", response_model=list[ProfileDistributionItem])
 def profile_distribution(
+    period: Period = Query("all"),
     db: Session = Depends(get_db),
     admin: AdminUser = Depends(get_current_admin),
 ):
+    start, end = period_range(period, db)
     tiers = db.query(Tier).order_by(Tier.order_index).all()
     # Как и с процентами по вариантам ответа: считаем счётчики по всем
     # уровням сразу и раздаём проценты одним пакетом (percentages_of), чтобы
     # круговая диаграмма и подписи под ней всегда суммировались в 100%,
     # а не в 99.9%/100.1% из-за независимого округления каждой доли.
-    counts = [
-        db.query(func.count(GameSession.id))
-        .filter(GameSession.tier_id == tier.id, GameSession.finished_at.isnot(None))
-        .scalar()
-        or 0
-        for tier in tiers
-    ]
+    def finished_count(tier_id: int) -> int:
+        query = db.query(func.count(GameSession.id)).filter(
+            GameSession.tier_id == tier_id, GameSession.finished_at.isnot(None)
+        )
+        if start is not None:
+            query = query.filter(GameSession.finished_at >= start, GameSession.finished_at <= end)
+        return query.scalar() or 0
+
+    counts = [finished_count(tier.id) for tier in tiers]
     percents = percentages_of(counts)
     return [
-        ProfileDistributionItem(key=tier.key, label=tier.level, percent=percent)
-        for tier, percent in zip(tiers, percents)
+        ProfileDistributionItem(key=tier.key, label=tier.level, percent=percent, count=count)
+        for tier, percent, count in zip(tiers, percents, counts)
     ]
 
 
@@ -313,19 +347,25 @@ def profile_distribution(
 @router.get("/mistakes", response_model=list[CommonMistake])
 def common_mistakes(
     limit: int = Query(3, ge=1, le=10),
+    period: Period = Query("all"),
     db: Session = Depends(get_db),
     admin: AdminUser = Depends(get_current_admin),
 ):
     """Самые частые НЕ лучшие ответы по всем сценариям — чтобы понять,
     какие темы стоит объяснять на выставке подробнее."""
+    start, end = period_range(period, db)
     candidates: list[CommonMistake] = []
 
     scenarios = db.query(Scenario).order_by(Scenario.order_index).all()
     for scenario in scenarios:
         total_answers = (
-            db.query(func.count(SessionAnswer.id))
-            .filter(SessionAnswer.scenario_id == scenario.id)
-            .scalar()
+            answers_in_period(
+                db.query(func.count(SessionAnswer.id)).filter(
+                    SessionAnswer.scenario_id == scenario.id
+                ),
+                start,
+                end,
+            ).scalar()
             or 0
         )
         if not total_answers:
@@ -334,9 +374,13 @@ def common_mistakes(
             if option.points >= 10:
                 continue
             picked = (
-                db.query(func.count(SessionAnswer.id))
-                .filter(SessionAnswer.option_id == option.id)
-                .scalar()
+                answers_in_period(
+                    db.query(func.count(SessionAnswer.id)).filter(
+                        SessionAnswer.option_id == option.id
+                    ),
+                    start,
+                    end,
+                ).scalar()
                 or 0
             )
             if not picked:

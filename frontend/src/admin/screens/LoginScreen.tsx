@@ -36,13 +36,15 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showForgotHint, setShowForgotHint] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError(null);
     setIsSubmitting(true);
     try {
-      await login(username, password);
+      await login(username, password, rememberMe);
       onLogin();
     } catch {
       setError('Неверный логин или пароль');
@@ -101,13 +103,38 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
           <div className="flex items-center justify-between mt-1 text-[13px]">
             <label className="flex items-center gap-2 text-ink">
-              <input type="checkbox" className={`w-4 h-4 accent-brand ${CHOICE_INPUT}`} />
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className={`w-4 h-4 accent-brand ${CHOICE_INPUT}`}
+              />
               Запомнить меня
             </label>
-            <button type="button" className={`text-ink underline rounded-sm ${TEXT_LINK}`}>
+            <button
+              type="button"
+              onClick={() => setShowForgotHint((v) => !v)}
+              aria-expanded={showForgotHint}
+              aria-controls="forgot-password-hint"
+              className={`text-ink underline rounded-sm ${TEXT_LINK}`}
+            >
               Забыли пароль?
             </button>
           </div>
+
+          {/* Самостоятельного сброса нет: учётная запись одна, почты
+              у неё нет. Пароль меняет тот, у кого есть доступ к серверу. */}
+          {showForgotHint && (
+            <div
+              id="forgot-password-hint"
+              role="status"
+              className="bg-white rounded-[5px] px-4 py-3 text-[13px] text-ink leading-snug"
+            >
+              Восстановить пароль через сайт нельзя. Обратитесь к специалисту, который обслуживает
+              сервер приложения: он задаст новый пароль по инструкции из README (раздел
+              «Администратор и пароль»).
+            </div>
+          )}
 
           <button
             type="submit"
