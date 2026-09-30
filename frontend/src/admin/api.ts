@@ -2,33 +2,47 @@ import type { Category, VisualType } from '../types';
 import { apiRequest, API_BASE_URL, ApiError } from '../api/client';
 
 // ---------------------------------------------------------------------------
-// Токен администратора — храним в localStorage
+// Токен администратора
+//
+// «Запомнить меня» включено  → localStorage: вход сохраняется и после
+//                               закрытия браузера (до истечения токена).
+// «Запомнить меня» выключено → sessionStorage: вход сбрасывается, когда
+//                               закрывают вкладку или браузер. Так безопаснее
+//                               на общем компьютере в музее.
 // ---------------------------------------------------------------------------
 
 const TOKEN_KEY = 'admin_token';
 
 export function getStoredToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+  return sessionStorage.getItem(TOKEN_KEY) ?? localStorage.getItem(TOKEN_KEY);
 }
 
-function setStoredToken(token: string): void {
-  localStorage.setItem(TOKEN_KEY, token);
+function setStoredToken(token: string, remember: boolean): void {
+  // Убираем токен из обоих хранилищ, чтобы не осталось старого
+  // «запомненного» входа, если в этот раз галочку сняли.
+  clearStoredToken();
+  (remember ? localStorage : sessionStorage).setItem(TOKEN_KEY, token);
 }
 
 export function clearStoredToken(): void {
   localStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
 }
 
 // ---------------------------------------------------------------------------
 // Авторизация
 // ---------------------------------------------------------------------------
 
-export async function login(username: string, password: string): Promise<string> {
+export async function login(
+  username: string,
+  password: string,
+  remember: boolean,
+): Promise<string> {
   const data = await apiRequest<{ accessToken: string }>('/api/admin/login', {
     method: 'POST',
     body: { username, password },
   });
-  setStoredToken(data.accessToken);
+  setStoredToken(data.accessToken, remember);
   return data.accessToken;
 }
 
@@ -41,6 +55,15 @@ export async function whoAmI(token: string): Promise<{ id: number; username: str
 // ---------------------------------------------------------------------------
 
 export type Period = 'today' | '7d' | '30d' | 'all';
+
+// Подписи периодов — общие для фильтра на «Обзоре» и экрана разбивки
+// ответов, чтобы везде было видно, за какой период показаны данные.
+export const PERIOD_LABELS: Record<Period, string> = {
+  today: 'Сегодня',
+  '7d': '7 дней',
+  '30d': '30 дней',
+  all: 'За всё время',
+};
 
 export interface OverviewStats {
   playthroughs: { value: number; deltaPct: number };
@@ -72,18 +95,23 @@ export interface ScenarioStat {
   options: ScenarioOptionStat[];
 }
 
-export function fetchScenarioStats(token: string): Promise<ScenarioStat[]> {
-  return apiRequest('/api/admin/stats/scenarios', { token });
+export function fetchScenarioStats(token: string, period: Period): Promise<ScenarioStat[]> {
+  return apiRequest(`/api/admin/stats/scenarios?period=${period}`, { token });
 }
 
 export interface ProfileDistributionItem {
   key: string;
   label: string;
   percent: number;
+  /** Сколько завершённых прохождений за период получили этот профиль. */
+  count: number;
 }
 
-export function fetchProfileDistribution(token: string): Promise<ProfileDistributionItem[]> {
-  return apiRequest('/api/admin/stats/profiles', { token });
+export function fetchProfileDistribution(
+  token: string,
+  period: Period,
+): Promise<ProfileDistributionItem[]> {
+  return apiRequest(`/api/admin/stats/profiles?period=${period}`, { token });
 }
 
 export interface CommonMistake {
@@ -94,8 +122,8 @@ export interface CommonMistake {
   pickedPercent: number;
 }
 
-export function fetchMistakes(token: string, limit = 3): Promise<CommonMistake[]> {
-  return apiRequest(`/api/admin/stats/mistakes?limit=${limit}`, { token });
+export function fetchMistakes(token: string, period: Period, limit = 3): Promise<CommonMistake[]> {
+  return apiRequest(`/api/admin/stats/mistakes?limit=${limit}&period=${period}`, { token });
 }
 
 // ---------------------------------------------------------------------------

@@ -10,6 +10,7 @@ import {
   fetchProfileDistribution,
   fetchMistakes,
   type Period,
+  PERIOD_LABELS,
   type OverviewStats,
   type ScenarioStat,
   type ProfileDistributionItem,
@@ -18,6 +19,8 @@ import {
 import { SECONDARY_BUTTON, FOCUS_RING } from '../../styles/interactive';
 
 interface OverviewScreenProps {
+  period: Period;
+  onChangePeriod: (period: Period) => void;
   onChangeTab: (tab: AdminTab) => void;
   onOpenScenarioStats: (scenarioId: number) => void;
 }
@@ -40,12 +43,9 @@ function StatCard({ label, value, delta }: { label: string; value: string; delta
   );
 }
 
-const PERIODS: { key: Period; label: string }[] = [
-  { key: 'today', label: 'Сегодня' },
-  { key: '7d', label: '7 дней' },
-  { key: '30d', label: '30 дней' },
-  { key: 'all', label: 'За всё время' },
-];
+const PERIODS: { key: Period; label: string }[] = (['today', '7d', '30d', 'all'] as const).map(
+  (key) => ({ key, label: PERIOD_LABELS[key] }),
+);
 
 function PeriodFilter({ period, onChange }: { period: Period; onChange: (p: Period) => void }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -69,6 +69,10 @@ function PeriodFilter({ period, onChange }: { period: Period; onChange: (p: Peri
           />
         </svg>
       </button>
+
+      <p className="text-[11px] text-muted mt-1.5">
+        Все данные на этой странице — за выбранный период
+      </p>
 
       {isOpen && (
         <div className="absolute z-10 mt-1 bg-white border border-line min-w-[160px]">
@@ -100,9 +104,13 @@ function fmtDelta(value: number, suffix = ''): string {
   return `${sign}${value}${suffix}`;
 }
 
-export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: OverviewScreenProps) {
+export default function OverviewScreen({
+  period,
+  onChangePeriod,
+  onChangeTab,
+  onOpenScenarioStats,
+}: OverviewScreenProps) {
   const token = getStoredToken();
-  const [period, setPeriod] = useState<Period>('today');
   const [overview, setOverview] = useState<OverviewStats | null>(null);
   const [scenarioStats, setScenarioStats] = useState<ScenarioStat[]>([]);
   const [mistakes, setMistakes] = useState<CommonMistake[]>([]);
@@ -120,20 +128,28 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
       .catch(() => setError(true));
   }, [token, period]);
 
+  // Разбивка по сценариям, частые ошибки и профили — за тот же период,
+  // что и карточки сверху. requestId отбрасывает ответы на старый период,
+  // если админ быстро переключил фильтр несколько раз.
+  const detailsRequestIdRef = useRef(0);
   useEffect(() => {
     if (!token) return;
+    const requestId = ++detailsRequestIdRef.current;
     Promise.all([
-      fetchScenarioStats(token),
-      fetchMistakes(token, 3),
-      fetchProfileDistribution(token),
+      fetchScenarioStats(token, period),
+      fetchMistakes(token, period, 3),
+      fetchProfileDistribution(token, period),
     ])
       .then(([scenarioData, mistakeData, profileData]) => {
+        if (detailsRequestIdRef.current !== requestId) return;
         setScenarioStats(scenarioData);
         setMistakes(mistakeData);
         setProfiles(profileData);
       })
       .catch(() => setError(true));
-  }, [token]);
+  }, [token, period]);
+
+  const finishedInPeriod = profiles.reduce((sum, p) => sum + p.count, 0);
 
   if (error) {
     return (
@@ -163,7 +179,7 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
     <PhoneScreen>
       <TopNav active="overview" onChange={onChangeTab} />
       <div className="flex-1 overflow-y-auto -mx-5 px-5">
-        <PeriodFilter period={period} onChange={setPeriod} />
+        <PeriodFilter period={period} onChange={onChangePeriod} />
 
         <div className="grid grid-cols-2 gap-3">
           <StatCard
@@ -254,7 +270,9 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
 
         <div className="bg-white rounded-[5px] p-4 mt-3">
           <p className="text-[12px] font-bold text-ink mb-3">Частые ошибки</p>
-          {mistakes.length === 0 && <p className="text-[12px] text-muted">Пока нет данных.</p>}
+          {mistakes.length === 0 && (
+            <p className="text-[12px] text-muted">За выбранный период ошибок нет.</p>
+          )}
           {mistakes.map((mistake) => (
             <div
               key={`${mistake.scenarioId}-${mistake.optionLabel}`}
@@ -276,7 +294,9 @@ export default function OverviewScreen({ onChangeTab, onOpenScenarioStats }: Ove
 
         <div className="bg-white rounded-[5px] p-4 mt-3 mb-2">
           <p className="text-[12px] font-bold text-ink mb-3">
-            Профили — {overview.playthroughs.value.toLocaleString('ru-RU')} чел.
+            {/* Профиль получают только те, кто дошёл до конца, поэтому
+                считаем завершивших, а не все начатые прохождения. */}
+            Профили — {finishedInPeriod.toLocaleString('ru-RU')} чел. завершили игру
           </p>
           <div className="flex items-center gap-5">
             <DonutChart
